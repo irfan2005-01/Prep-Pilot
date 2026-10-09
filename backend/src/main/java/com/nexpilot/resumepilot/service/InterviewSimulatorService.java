@@ -533,9 +533,11 @@ public class InterviewSimulatorService {
             byte[] responseBytes = restClient.post()
                 .uri(targetUrl)
                 .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
                 .body(payload)
                 .retrieve()
-                .body(byte[].class);
+                .toEntity(byte[].class)
+                .getBody();
 
             if (responseBytes == null || responseBytes.length == 0) {
                 throw new GeminiServiceException("Received empty response from Gemini API", "EMPTY_RESPONSE", HttpStatus.BAD_GATEWAY);
