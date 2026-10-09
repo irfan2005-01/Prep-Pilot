@@ -1,6 +1,5 @@
 import { useState, type FC } from 'react';
 import { Compass, FileSearch, Layers, Menu, X, Brain } from 'lucide-react';
-import { Badge } from '../ui/Badge';
 
 export interface NavbarProps {
   activeView: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview';
@@ -19,16 +18,19 @@ export const Navbar: FC<NavbarProps> = ({
     <header
       role="banner"
       style={{
-        backgroundColor: 'rgba(32, 33, 35, 0.92)',
-        backdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(22, 23, 25, 0.95)',
+        backdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
         position: 'sticky',
         top: 0,
-        zIndex: 50
+        zIndex: 50,
+        width: '100%',
+        maxWidth: '100vw',
+        overflow: 'hidden'
       }}
     >
-      <div className="container" style={{ paddingBlock: '0.85rem' }}>
-        <div className="flex items-center justify-between">
+      <div className="container" style={{ paddingBlock: '0.75rem' }}>
+        <div className="flex items-center justify-between" style={{ gap: '1rem' }}>
           {/* Brand Identity */}
           <button
             type="button"
@@ -39,16 +41,17 @@ export const Navbar: FC<NavbarProps> = ({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.75rem',
+              gap: '0.65rem',
               textAlign: 'left',
-              padding: 0
+              padding: 0,
+              flexShrink: 0
             }}
             aria-label="Prep Pilot Homepage"
           >
             <div
               style={{
-                width: '38px',
-                height: '38px',
+                width: '36px',
+                height: '36px',
                 borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--accent-subtle)',
                 border: '1px solid var(--accent-border)',
@@ -59,25 +62,26 @@ export const Navbar: FC<NavbarProps> = ({
                 boxShadow: '0 2px 8px rgba(232, 90, 11, 0.2)'
               }}
             >
-              <Compass size={22} strokeWidth={2.2} />
+              <Compass size={20} strokeWidth={2.2} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <span
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.28rem',
+                    fontSize: '1.2rem',
                     fontWeight: 600,
                     color: 'var(--text-primary)',
-                    letterSpacing: '-0.01em'
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2
                   }}
                 >
                   Prep Pilot
                 </span>
                 <span
                   style={{
-                    fontSize: '0.72rem',
-                    padding: '0.15rem 0.45rem',
+                    fontSize: '0.68rem',
+                    padding: '0.1rem 0.35rem',
                     backgroundColor: 'rgba(255,255,255,0.06)',
                     borderRadius: 'var(--radius-sm)',
                     color: 'var(--text-muted)',
@@ -91,9 +95,9 @@ export const Navbar: FC<NavbarProps> = ({
               </div>
               <p
                 style={{
-                  fontSize: '0.72rem',
+                  fontSize: '0.68rem',
                   color: 'var(--text-muted)',
-                  marginTop: '-2px',
+                  marginTop: '1px',
                   lineHeight: 1
                 }}
               >
@@ -107,8 +111,9 @@ export const Navbar: FC<NavbarProps> = ({
             aria-label="Main Navigation"
             style={{
               display: 'none',
-              gap: '0.35rem',
-              alignItems: 'center'
+              gap: '0.2rem',
+              alignItems: 'center',
+              flexWrap: 'nowrap'
             }}
             className="desktop-nav"
           >
@@ -116,6 +121,7 @@ export const Navbar: FC<NavbarProps> = ({
               type="button"
               className={`tab-btn ${activeView === 'home' ? 'active' : ''}`}
               onClick={() => setActiveView('home')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               Overview
             </button>
@@ -123,19 +129,18 @@ export const Navbar: FC<NavbarProps> = ({
               type="button"
               className={`tab-btn ${activeView === 'analyzer' ? 'active' : ''}`}
               onClick={() => setActiveView('analyzer')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <FileSearch size={16} />
+                <FileSearch size={15} />
                 Resume Analyzer
-                <Badge variant="orange" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-                  Phase 1
-                </Badge>
               </span>
             </button>
             <button
               type="button"
               className={`tab-btn ${activeView === 'results' ? 'active' : ''}`}
               onClick={() => setActiveView('results')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               ATS Scorecard
             </button>
@@ -143,47 +148,53 @@ export const Navbar: FC<NavbarProps> = ({
               type="button"
               className={`tab-btn ${activeView === 'roadmap' ? 'active' : ''}`}
               onClick={() => setActiveView('roadmap')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Compass size={16} />
+                <Compass size={15} />
                 Learning Roadmap
-                <Badge variant="orange" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-                  Phase 3
-                </Badge>
               </span>
             </button>
             <button
               type="button"
               className={`tab-btn ${activeView === 'interview' ? 'active' : ''}`}
               onClick={() => setActiveView('interview')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Brain size={16} />
+                <Brain size={15} />
                 Mock Interview
-                <Badge variant="orange" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-                  Phase 4
-                </Badge>
               </span>
             </button>
             <button
               type="button"
               className={`tab-btn ${activeView === 'architecture' ? 'active' : ''}`}
               onClick={() => setActiveView('architecture')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Layers size={16} />
+                <Layers size={15} />
                 Architecture
               </span>
             </button>
           </nav>
 
           {/* Desktop Right Action Controls */}
-          <div style={{ display: 'none', alignItems: 'center', gap: '0.75rem' }} className="desktop-actions">
+          <div
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flexShrink: 0
+            }}
+            className="desktop-actions"
+          >
             <button
               type="button"
               className="btn btn-outline btn-sm"
               onClick={onExploreSample}
               title="Inspect reference benchmark example scorecard"
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
             >
               Reference Example
             </button>
@@ -191,6 +202,7 @@ export const Navbar: FC<NavbarProps> = ({
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setActiveView('analyzer')}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
             >
               Analyze Resume
             </button>
@@ -200,12 +212,12 @@ export const Navbar: FC<NavbarProps> = ({
           <button
             type="button"
             className="mobile-toggle btn btn-ghost"
-            style={{ padding: '0.5rem', display: 'flex' }}
+            style={{ padding: '0.4rem', display: 'flex' }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
@@ -213,12 +225,12 @@ export const Navbar: FC<NavbarProps> = ({
         {mobileMenuOpen && (
           <div
             style={{
-              paddingTop: '1rem',
-              marginTop: '0.75rem',
+              paddingTop: '0.85rem',
+              marginTop: '0.65rem',
               borderTop: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem'
+              gap: '0.4rem'
             }}
           >
             <button
@@ -320,7 +332,7 @@ export const Navbar: FC<NavbarProps> = ({
       </div>
 
       <style>{`
-        @media (min-width: 860px) {
+        @media (min-width: 1024px) {
           .desktop-nav { display: flex !important; }
           .desktop-actions { display: flex !important; }
           .mobile-toggle { display: none !important; }

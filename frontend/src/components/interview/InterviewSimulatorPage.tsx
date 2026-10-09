@@ -149,19 +149,43 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="container" style={{ maxWidth: '960px', margin: '0 auto', padding: '2rem 1rem 5rem', width: '100%' }}>
       {/* Error Alert Banner */}
       {errorMessage && (
-        <div className="max-w-3xl mx-auto mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3 shadow-md animate-in fade-in">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-1">
-            <h4 className="text-sm font-semibold text-red-200">Interview System Notice</h4>
-            <p className="text-xs text-red-300 leading-relaxed">{errorMessage}</p>
+        <div
+          style={{
+            maxWidth: '840px',
+            margin: '0 auto 2rem',
+            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.85rem'
+          }}
+        >
+          <AlertCircle size={20} color="#f87171" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ flex: 1 }}>
+            <h4 style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fca5a5', marginBottom: '0.25rem' }}>
+              Interview System Notice
+            </h4>
+            <p style={{ fontSize: '0.82rem', color: '#fca5a5', opacity: 0.9, lineHeight: 1.5 }}>
+              {errorMessage}
+            </p>
           </div>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-xs text-red-400 hover:text-red-200 transition-colors p-1"
+            style={{
+              fontSize: '0.78rem',
+              color: '#f87171',
+              padding: '0.25rem 0.5rem',
+              cursor: 'pointer',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'transparent'
+            }}
           >
             Dismiss
           </button>

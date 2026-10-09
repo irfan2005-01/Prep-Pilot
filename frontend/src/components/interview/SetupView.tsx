@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { TARGET_ROLES } from '../../data/roles';
 import type { InterviewDifficulty, InterviewSetupConfig, InterviewType } from '../../types/interview';
-import { Sparkles, Brain, Compass, HelpCircle, Layers, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Brain, Compass, Layers, Check, ArrowRight, BookOpen, Loader2 } from 'lucide-react';
+import { Badge } from '../ui/Badge';
 
 interface SetupViewProps {
   initialRoleId?: string;
@@ -41,85 +42,247 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold tracking-wide uppercase">
-          <Brain className="w-3.5 h-3.5" />
-          Phase 4 • AI Mock Interview Simulator
+      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
+          <Badge variant="orange" icon={<Brain size={13} />}>
+            Phase 4 • AI Mock Interview Simulator
+          </Badge>
         </div>
-        <h1 className="text-3xl md:text-4xl font-serif text-zinc-100 font-bold tracking-tight">
+        <h1
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(2.1rem, 3.8vw, 3rem)',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            marginBottom: '0.75rem',
+            lineHeight: 1.18
+          }}
+        >
           Calibrate Your Interview Readiness
         </h1>
-        <p className="text-zinc-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+        <p
+          style={{
+            fontSize: '1rem',
+            color: 'var(--text-secondary)',
+            maxWidth: '680px',
+            margin: '0 auto',
+            lineHeight: 1.6
+          }}
+        >
           Experience role-calibrated technical and behavioral interview simulations powered by Gemini AI. Receive immediate STAR-aware evaluations and actionable rubrics.
         </p>
       </div>
 
       {/* Personalization Context Banner */}
       {hasContext && (
-        <div className="bg-[#25262a] border border-orange-500/30 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-          <Sparkles className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-              Personalized Using Your Resume Diagnostic
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
+        <div
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--accent-border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            boxShadow: 'var(--shadow-subtle)'
+          }}
+        >
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--accent-subtle)',
+              border: '1px solid var(--accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-primary)',
+              flexShrink: 0
+            }}
+          >
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Personalized Using Your Resume Diagnostic
+              </span>
+              <span
+                style={{
+                  fontSize: '0.68rem',
+                  padding: '0.1rem 0.45rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--accent-subtle)',
+                  color: 'var(--accent-primary)',
+                  border: '1px solid var(--accent-border)',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em'
+                }}
+              >
                 Connected
               </span>
-            </h4>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            </div>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Questions will specifically assess your diagnosed skill gaps{' '}
               {contextSkillGaps.length > 0 && (
-                <span className="text-orange-400 font-medium">({contextSkillGaps.slice(0, 3).join(', ')})</span>
+                <strong style={{ color: 'var(--accent-primary)' }}>
+                  ({contextSkillGaps.slice(0, 3).join(', ')})
+                </strong>
               )}{' '}
-              while validating your verified strengths.
+              while validating your verified technical background.
             </p>
           </div>
         </div>
       )}
 
-      {/* Configuration Form */}
-      <form onSubmit={handleSubmit} className="bg-[#25262a] border border-[#32343a] rounded-2xl p-6 md:p-8 space-y-8 shadow-xl">
-        {/* Role Selector */}
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
-            <Compass className="w-4 h-4 text-orange-500" />
-            Target Career Role
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Configuration Form Card */}
+      <form onSubmit={handleSubmit} className="card card-elevated" style={{ padding: '2.5rem' }}>
+        {/* Section 1: Role Selector */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+            <label
+              style={{
+                fontSize: '0.98rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Compass size={18} color="var(--accent-primary)" />
+              <span>Target Career Role</span>
+            </label>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              7 Supported Tracks
+            </span>
+          </div>
+
+          <div
+            role="radiogroup"
+            aria-label="Target Career Role Selection"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '0.65rem',
+              marginBottom: '1rem'
+            }}
+          >
             {TARGET_ROLES.map((role) => {
               const isSelected = role.id === roleId;
               return (
                 <button
                   type="button"
                   key={role.id}
+                  role="radio"
+                  aria-checked={isSelected}
                   onClick={() => setRoleId(role.id)}
-                  className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-orange-500/10 border-orange-500 text-zinc-100 shadow-sm'
-                      : 'bg-[#1e1f23] border-[#32343a] text-zinc-400 hover:text-zinc-200 hover:border-[#42444d]'
-                  }`}
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.85rem 1rem',
+                    backgroundColor: isSelected ? 'var(--accent-subtle)' : 'var(--bg-subtle)',
+                    border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem'
+                  }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-xs font-mono text-zinc-500 uppercase">{role.category}</span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-orange-500" />}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                      {role.category}
+                    </span>
+                    {isSelected && (
+                      <div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--accent-primary)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
-                  <span className={`text-sm font-semibold mt-2 ${isSelected ? 'text-zinc-100' : 'text-zinc-300'}`}>
+                  <span
+                    style={{
+                      fontSize: '0.92rem',
+                      fontWeight: isSelected ? 600 : 500,
+                      color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)'
+                    }}
+                  >
                     {role.title}
                   </span>
                 </button>
               );
             })}
           </div>
+
+          {/* Selected Role Meta Details Box */}
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              backgroundColor: 'rgba(232, 90, 11, 0.04)',
+              border: '1px solid var(--accent-border)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.45rem'
+            }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Target Track: {selectedRole.title}
+              </span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Scope: {selectedRole.minExperienceLevel}
+              </span>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              {selectedRole.description}
+            </p>
+          </div>
         </div>
 
-        {/* Interview Type Selector */}
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-orange-500" />
-            Interview Category Focus
+        <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '2rem 0' }} />
+
+        {/* Section 2: Interview Category Focus */}
+        <div style={{ marginBottom: '2rem' }}>
+          <label
+            style={{
+              fontSize: '0.98rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.85rem'
+            }}
+          >
+            <Layers size={18} color="var(--accent-primary)" />
+            <span>Interview Category Focus</span>
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '0.75rem'
+            }}
+          >
             {[
               {
                 id: 'mixed',
@@ -143,38 +306,84 @@ export const SetupView: React.FC<SetupViewProps> = ({
                   type="button"
                   key={type.id}
                   onClick={() => setInterviewType(type.id as InterviewType)}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    isSelected
-                      ? 'bg-orange-500/10 border-orange-500 text-zinc-100'
-                      : 'bg-[#1e1f23] border-[#32343a] text-zinc-400 hover:text-zinc-200 hover:border-[#42444d]'
-                  }`}
+                  style={{
+                    padding: '1.15rem 1.25rem',
+                    backgroundColor: isSelected ? 'var(--accent-subtle)' : 'var(--bg-subtle)',
+                    border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.45rem'
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-sm font-semibold ${isSelected ? 'text-zinc-100' : 'text-zinc-300'}`}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '0.92rem',
+                        fontWeight: isSelected ? 600 : 500,
+                        color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)'
+                      }}
+                    >
                       {type.title}
                     </span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-orange-500" />}
+                    {isSelected && (
+                      <div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--accent-primary)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-zinc-400 mt-2 leading-relaxed">{type.description}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    {type.description}
+                  </p>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Difficulty & Question Count Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-          {/* Difficulty */}
-          <div className="space-y-3">
-            <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
-              <Brain className="w-4 h-4 text-orange-500" />
+        <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '2rem 0' }} />
+
+        {/* Section 3: Difficulty & Question Count */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '2rem',
+            marginBottom: '2.5rem'
+          }}
+        >
+          {/* Difficulty Selection */}
+          <div>
+            <label
+              style={{
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                display: 'block',
+                marginBottom: '0.75rem'
+              }}
+            >
               Difficulty Caliber
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               {[
-                { id: 'beginner', label: 'Beginner', desc: 'Core fundamentals' },
-                { id: 'intermediate', label: 'Intermediate', desc: 'Real trade-offs' },
-                { id: 'advanced', label: 'Advanced', desc: 'High-scale design' },
+                { id: 'beginner', label: 'Beginner', desc: 'Fundamentals' },
+                { id: 'intermediate', label: 'Intermediate', desc: 'Trade-offs' },
+                { id: 'advanced', label: 'Advanced', desc: 'System design' },
               ].map((diff) => {
                 const isSelected = difficulty === diff.id;
                 return (
@@ -182,46 +391,67 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     type="button"
                     key={diff.id}
                     onClick={() => setDifficulty(diff.id as InterviewDifficulty)}
-                    className={`py-3 px-2 rounded-xl border text-center transition-all ${
-                      isSelected
-                        ? 'bg-orange-500/10 border-orange-500 text-zinc-100 font-semibold'
-                        : 'bg-[#1e1f23] border-[#32343a] text-zinc-400 hover:text-zinc-200'
-                    }`}
+                    style={{
+                      padding: '0.75rem 0.5rem',
+                      textAlign: 'center',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-subtle)',
+                      border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                      color: isSelected ? '#ffffff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)'
+                    }}
                   >
-                    <div className="text-xs font-semibold">{diff.label}</div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5">{diff.desc}</div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 600 }}>{diff.label}</div>
+                    <div style={{ fontSize: '0.7rem', opacity: isSelected ? 0.9 : 0.6, marginTop: '2px' }}>
+                      {diff.desc}
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Question Count */}
-          <div className="space-y-3">
-            <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
-              <HelpCircle className="w-4 h-4 text-orange-500" />
-              Question Length
+          {/* Question Count Selection */}
+          <div>
+            <label
+              style={{
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                display: 'block',
+                marginBottom: '0.75rem'
+              }}
+            >
+              Question Count Pacing
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
               {[
-                { count: 5, time: '~15 min', label: '5 Questions' },
-                { count: 8, time: '~25 min', label: '8 Questions' },
-                { count: 10, time: '~35 min', label: '10 Questions' },
-              ].map((q) => {
-                const isSelected = questionCount === q.count;
+                { count: 5, label: '5 Questions', time: '~15 mins' },
+                { count: 8, label: '8 Questions', time: '~25 mins' },
+                { count: 10, label: '10 Questions', time: '~35 mins' },
+              ].map((item) => {
+                const isSelected = questionCount === item.count;
                 return (
                   <button
                     type="button"
-                    key={q.count}
-                    onClick={() => setQuestionCount(q.count)}
-                    className={`py-3 px-2 rounded-xl border text-center transition-all ${
-                      isSelected
-                        ? 'bg-orange-500/10 border-orange-500 text-zinc-100 font-semibold'
-                        : 'bg-[#1e1f23] border-[#32343a] text-zinc-400 hover:text-zinc-200'
-                    }`}
+                    key={item.count}
+                    onClick={() => setQuestionCount(item.count)}
+                    style={{
+                      padding: '0.75rem 0.5rem',
+                      textAlign: 'center',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-subtle)',
+                      border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                      color: isSelected ? '#ffffff' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)'
+                    }}
                   >
-                    <div className="text-xs font-semibold">{q.label}</div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5">{q.time}</div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 600 }}>{item.count} Qs</div>
+                    <div style={{ fontSize: '0.7rem', opacity: isSelected ? 0.9 : 0.6, marginTop: '2px' }}>
+                      {item.time}
+                    </div>
                   </button>
                 );
               })}
@@ -230,30 +460,43 @@ export const SetupView: React.FC<SetupViewProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="pt-4 border-t border-[#32343a] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--border-subtle)'
+          }}
+        >
           <button
             type="button"
+            className="btn btn-outline"
             onClick={() => onLoadBenchmark(roleId)}
-            className="text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1.5 order-2 sm:order-1"
+            disabled={isLoading}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <Sparkles className="w-3.5 h-3.5 text-zinc-500" />
-            Explore Pre-Calibrated Demo Scorecard
+            <BookOpen size={16} />
+            <span>Explore Reference Benchmark Scorecard</span>
           </button>
 
           <button
             type="submit"
+            className="btn btn-primary btn-lg"
             disabled={isLoading}
-            className="w-full sm:w-auto px-8 py-3.5 bg-orange-600 hover:bg-orange-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed order-1 sm:order-2"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', minWidth: '240px' }}
           >
             {isLoading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Generating {selectedRole.title} Questions...</span>
+                <Loader2 size={18} style={{ animation: 'spin 1.5s linear infinite' }} />
+                <span>Calibrating Simulation...</span>
               </>
             ) : (
               <>
-                <Brain className="w-4 h-4" />
-                <span>Launch Mock Interview ({questionCount} Questions)</span>
+                <span>Start Mock Interview</span>
+                <ArrowRight size={18} />
               </>
             )}
           </button>

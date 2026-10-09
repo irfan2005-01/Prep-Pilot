@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { InterviewQuestion } from '../../types/interview';
-import { Send, LogOut, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
+import { Send, LogOut, Sparkles, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
 
 interface QuestionViewProps {
   question: InterviewQuestion;
@@ -47,14 +47,27 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-300">
+    <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#32343a]">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono uppercase tracking-wider text-orange-400 font-bold bg-orange-500/10 px-2.5 py-1 rounded-md border border-orange-500/20">
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          paddingBottom: '0.75rem',
+          borderBottom: '1px solid var(--border-subtle)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span
+            className="badge badge-orange"
+            style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.72rem' }}
+          >
             {roleTitle}
           </span>
-          <span className="text-xs text-zinc-400 font-medium">
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
             Question {currentNumber} of {totalQuestions}
           </span>
         </div>
@@ -62,72 +75,178 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
         <button
           type="button"
           onClick={onRequestExit}
-          className="text-xs font-medium text-zinc-400 hover:text-red-400 transition-colors flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-red-500/10"
+          className="btn btn-ghost btn-sm"
+          style={{
+            fontSize: '0.8rem',
+            color: 'var(--text-muted)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.35rem 0.65rem'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#f87171';
+            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--text-muted)';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut size={14} />
           <span>Exit Interview</span>
         </button>
       </div>
 
       {/* Progress Bar */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-[11px] font-mono text-zinc-500">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '0.72rem',
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--text-muted)',
+            letterSpacing: '0.04em'
+          }}
+        >
           <span>PROGRESS</span>
           <span>{progressPct}% COMPLETED</span>
         </div>
-        <div className="w-full h-1.5 bg-[#2d2f34] rounded-full overflow-hidden">
+        <div
+          style={{
+            width: '100%',
+            height: '7px',
+            backgroundColor: 'var(--bg-subtle)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '999px',
+            overflow: 'hidden'
+          }}
+        >
           <div
-            className="h-full bg-gradient-to-r from-orange-600 to-amber-500 transition-all duration-500 rounded-full"
-            style={{ width: `${progressPct}%` }}
+            style={{
+              height: '100%',
+              width: `${progressPct}%`,
+              background: 'linear-gradient(90deg, var(--accent-primary) 0%, #ff883d 100%)',
+              transition: 'width 0.4s ease-in-out',
+              borderRadius: '999px'
+            }}
           />
         </div>
       </div>
 
-      {/* Question Card */}
-      <div className="bg-[#25262a] border border-[#32343a] rounded-2xl p-6 md:p-8 space-y-5 shadow-xl">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-[#1e1f23] text-zinc-300 border border-[#3e4148]">
+      {/* Main Question Card */}
+      <div className="card card-elevated" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        {/* Meta tags */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+          <span
+            style={{
+              padding: '0.25rem 0.65rem',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              backgroundColor: 'var(--bg-subtle)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-default)',
+              fontFamily: 'var(--font-mono)'
+            }}
+          >
             {question.category}
           </span>
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-zinc-800 text-zinc-400">
+          <span
+            style={{
+              padding: '0.25rem 0.65rem',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              backgroundColor: 'var(--bg-card)',
+              color: 'var(--text-muted)',
+              border: '1px solid var(--border-subtle)',
+              fontFamily: 'var(--font-mono)'
+            }}
+          >
             {question.competency}
           </span>
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono text-zinc-500">
-            Caliber: {question.difficulty}
+          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+            Caliber: <strong style={{ color: 'var(--text-secondary)' }}>{question.difficulty}</strong>
           </span>
         </div>
 
-        <h2 className="text-xl md:text-2xl font-serif text-zinc-100 font-semibold leading-relaxed tracking-tight">
+        {/* Question Text */}
+        <h2
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1.25rem, 2.5vw, 1.65rem)',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            lineHeight: 1.45,
+            letterSpacing: '-0.01em',
+            margin: 0
+          }}
+        >
           &ldquo;{question.questionText}&rdquo;
         </h2>
 
         {/* Guidance Prompt */}
-        <div className="bg-[#1e1f23] border border-[#32343a] rounded-xl p-3.5 flex items-start gap-2.5">
-          <Sparkles className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-zinc-400 leading-relaxed">
+        <div
+          style={{
+            backgroundColor: 'rgba(232, 90, 11, 0.04)',
+            border: '1px solid var(--accent-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem'
+          }}
+        >
+          <Sparkles size={16} color="var(--accent-primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
             {isBehavioral ? (
               <>
-                <strong className="text-zinc-200">STAR Guideline:</strong> Structure your response around{' '}
-                <span className="text-orange-400">S</span>ituation, <span className="text-orange-400">T</span>ask,{' '}
-                <span className="text-orange-400">A</span>ction, and <span className="text-orange-400">R</span>esult. Focus on your direct contributions.
+                <strong style={{ color: 'var(--text-primary)' }}>STAR Guideline:</strong> Structure your response around{' '}
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>S</span>ituation,{' '}
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>T</span>ask,{' '}
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>A</span>ction, and{' '}
+                <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>R</span>esult. Focus on your direct contributions.
               </>
             ) : (
               <>
-                <strong className="text-zinc-200">Technical Guideline:</strong> Detail the underlying mechanisms, trade-offs, and practical design decisions that justify your approach.
+                <strong style={{ color: 'var(--text-primary)' }}>Technical Guideline:</strong> Detail the underlying mechanisms, trade-offs, and practical architecture decisions that justify your approach.
               </>
             )}
           </p>
         </div>
 
         {/* Answer Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs text-zinc-400">
-              <label htmlFor="answer-input" className="font-semibold text-zinc-200 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-orange-500" />
-                Your Practice Response
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.5rem'
+              }}
+            >
+              <label
+                htmlFor="answer-input"
+                style={{
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
+                }}
+              >
+                <MessageSquare size={15} color="var(--accent-primary)" />
+                <span>Your Practice Response</span>
               </label>
-              <span className="font-mono text-[11px] text-zinc-500">
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 {answerText.length} characters (min 15)
               </span>
             </div>
@@ -147,35 +266,97 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
                   ? "Describe the context, your specific responsibility, the concrete action you took, and what resulted from your effort..."
                   : "Explain the architecture, underlying principles, edge cases, and technical trade-offs..."
               }
-              className="w-full bg-[#1b1c1e] border border-[#383a40] focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-xl p-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-all resize-y leading-relaxed"
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--bg-subtle)',
+                border: clientError ? '1px solid #f87171' : '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.15rem',
+                fontSize: '0.92rem',
+                color: 'var(--text-primary)',
+                lineHeight: 1.6,
+                fontFamily: 'var(--font-sans)',
+                resize: 'vertical',
+                minHeight: '160px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color var(--transition-fast)'
+              }}
+              onFocus={(e) => {
+                if (!clientError) e.target.style.borderColor = 'var(--accent-primary)';
+              }}
+              onBlur={(e) => {
+                if (!clientError) e.target.style.borderColor = 'var(--border-default)';
+              }}
             />
           </div>
 
           {clientError && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0" />
+            <div
+              style={{
+                padding: '0.85rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#fca5a5',
+                fontSize: '0.82rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem'
+              }}
+            >
+              <AlertCircle size={16} color="#f87171" style={{ flexShrink: 0 }} />
               <span>{clientError}</span>
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[11px] text-zinc-500 hidden sm:inline">
-              Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-mono text-[10px]">Ctrl+Enter</kbd> to submit
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              paddingTop: '0.5rem'
+            }}
+          >
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              Tip: Press{' '}
+              <kbd
+                style={{
+                  padding: '0.15rem 0.4rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-default)',
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.72rem'
+                }}
+              >
+                Ctrl+Enter
+              </kbd>{' '}
+              to submit
             </span>
 
             <button
               type="submit"
               disabled={isSubmitting || answerText.trim().length === 0}
-              className="w-full sm:w-auto px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white font-medium text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary btn-lg"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: '220px'
+              }}
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <Loader2 size={16} style={{ animation: 'spin 1.5s linear infinite' }} />
                   <span>AI Evaluating Answer...</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <Send size={15} />
                   <span>Submit for AI Evaluation</span>
                 </>
               )}
@@ -186,4 +367,3 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
     </div>
   );
 };
-
