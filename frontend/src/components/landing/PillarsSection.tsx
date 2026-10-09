@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileSearch, GraduationCap, Video, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { FileSearch, GraduationCap, Video, ArrowRight } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 export interface PillarsSectionProps {
@@ -19,8 +19,7 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
             Three Connected Experiences. One Unified Co-Pilot.
           </h2>
           <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
-            Placement success requires a continuous feedback loop: from refining your resume credentials,
-            to closing curriculum gaps with verified free resources, to mastering the live interview.
+            Build confidence at every step: strengthen your resume, focus your learning, and practice for interviews.
           </p>
         </div>
 
@@ -32,7 +31,7 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
             gap: '1.75rem'
           }}
         >
-          {/* Pillar 1: AI Resume Analyzer (Active) */}
+          {/* Resume Analyzer */}
           <div
             className="card"
             style={{
@@ -59,13 +58,11 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
               >
                 <FileSearch size={22} />
               </div>
-              <Badge variant="orange" icon={<CheckCircle2 size={12} />}>
-                Phase 1 Active Priority
-              </Badge>
+              <Badge variant="orange">Resume Analyzer</Badge>
             </div>
 
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.65rem' }}>
-              1. AI Resume Diagnostic
+              Resume Analysis
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
               Precision parsing for PDF & DOCX resumes. Evaluates keyword matching against industry job benchmarks, identifies structural flaws, and provides side-by-side bullet rewrites.
@@ -103,14 +100,14 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
             </div>
           </div>
 
-          {/* Pillar 2: Personalized Learning Roadmaps (Phase 2 Preview) */}
+          {/* Personalized Learning Roadmap */}
           <div
             className="card"
             style={{
-              backgroundColor: 'rgba(37, 38, 42, 0.5)',
+              backgroundColor: 'var(--bg-card)',
               display: 'flex',
               flexDirection: 'column',
-              opacity: 0.95
+              borderColor: 'var(--border-subtle)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -119,8 +116,8 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
                   width: '44px',
                   height: '44px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--accent-subtle)',
+                  color: 'var(--accent-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -129,19 +126,17 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
               >
                 <GraduationCap size={22} />
               </div>
-              <Badge variant="neutral" icon={<Clock size={12} />}>
-                Phase 2 Roadmap
-              </Badge>
+              <Badge variant="neutral">Personalized guidance</Badge>
             </div>
 
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.65rem' }}>
-              2. Personalized Roadmaps
+              Personalized Learning Roadmap
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
               Directly translates detected resume skill gaps into a structured milestone curriculum, curated exclusively with vetted, free learning resources.
             </p>
 
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.86rem', color: 'var(--text-muted)' }}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>•</span>
                 Adaptive milestone tracks tailored to missing role skills
@@ -156,30 +151,20 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>•</span>
-                Weekly progress checkpoints and completion telemetry
+                Checkpoints to keep your learning plan on track
               </li>
             </ul>
 
-            <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ width: '100%', cursor: 'default' }}
-                disabled
-              >
-                <span>Curriculum Engine in Phase 2</span>
-              </button>
-            </div>
           </div>
 
-          {/* Pillar 3: HR & Technical Mock Interviews (Phase 3 Preview) */}
+          {/* Mock Interview */}
           <div
             className="card"
             style={{
-              backgroundColor: 'rgba(37, 38, 42, 0.5)',
+              backgroundColor: 'var(--bg-card)',
               display: 'flex',
               flexDirection: 'column',
-              opacity: 0.95
+              borderColor: 'var(--border-subtle)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -188,8 +173,8 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
                   width: '44px',
                   height: '44px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--accent-subtle)',
+                  color: 'var(--accent-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -198,19 +183,17 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
               >
                 <Video size={22} />
               </div>
-              <Badge variant="neutral" icon={<Clock size={12} />}>
-                Phase 3 Roadmap
-              </Badge>
+              <Badge variant="neutral">Interview practice</Badge>
             </div>
 
             <h3 style={{ fontSize: '1.35rem', marginBottom: '0.65rem' }}>
-              3. Mock Interview Simulator
+              Mock Interview Practice
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
               Realistic technical and HR behavioral interview practice with instant rubric scorecards, STAR format evaluation, and historical progress tracking.
             </p>
 
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.86rem', color: 'var(--text-muted)' }}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>•</span>
                 Dynamic question generation based on your target role
@@ -229,16 +212,6 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onGoToAnalyzer }
               </li>
             </ul>
 
-            <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ width: '100%', cursor: 'default' }}
-                disabled
-              >
-                <span>Simulator Engine in Phase 3</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>

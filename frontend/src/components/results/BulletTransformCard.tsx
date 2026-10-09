@@ -61,7 +61,7 @@ export const BulletTransformCard: FC<BulletTransformCardProps> = ({ improvements
               <div
                 style={{
                   padding: '0.75rem 1.25rem',
-                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  backgroundColor: 'rgba(32, 37, 43, 0.04)',
                   borderBottom: '1px solid var(--border-subtle)',
                   display: 'flex',
                   flexWrap: 'wrap',
@@ -185,4 +185,5 @@ export const BulletTransformCard: FC<BulletTransformCardProps> = ({ improvements
     </div>
   );
 };
+
 

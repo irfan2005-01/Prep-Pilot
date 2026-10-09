@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 
 import java.util.Arrays;
 
@@ -12,6 +13,14 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOriginsConfig;
+    private final SessionCsrfInterceptor csrfInterceptor;
+
+    public CorsConfig(SessionCsrfInterceptor csrfInterceptor) { this.csrfInterceptor = csrfInterceptor; }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(csrfInterceptor).addPathPatterns("/api/**");
+    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -22,9 +31,10 @@ public class CorsConfig implements WebMvcConfigurer {
 
         registry.addMapping("/api/**")
             .allowedOrigins(origins)
-            .allowedMethods("GET", "POST", "OPTIONS")
-            .allowedHeaders("Content-Type", "Accept", "Origin")
-            .allowCredentials(false) // Do not enable wildcard credentialed CORS
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+            .allowedHeaders("Content-Type", "Accept", "Origin", "X-Student-Token", "Authorization", "X-CSRF-Token")
+            .exposedHeaders("X-Student-Token", "X-Roadmap-Id")
+            .allowCredentials(true)
             .maxAge(3600);
     }
 }

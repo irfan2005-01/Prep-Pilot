@@ -1,7 +1,7 @@
 import type { ResumeAnalysisResult, TargetRoleId } from '../types/resume';
-
-const API_BASE_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:8080';
+import { getAuthHeaders, extractAndSaveToken } from './dashboardService';
+import { getCsrfHeaders } from './authService';
+import { API_BASE_URL } from './apiConfig';
 
 export interface ApiErrorPayload {
   error: string;
@@ -24,11 +24,20 @@ export async function analyzeResumeApi(
   formData.append('file', file);
   formData.append('roleId', roleId);
 
+  const authHeaders = getAuthHeaders();
+  const csrfHeaders = await getCsrfHeaders();
   const response = await fetch(`${API_BASE_URL}/api/v1/resumes/analyze`, {
+    credentials: 'include',
     method: 'POST',
+    headers: {
+      ...authHeaders,
+      ...csrfHeaders
+    },
     body: formData,
     signal
   });
+
+  extractAndSaveToken(response.headers);
 
   if (!response.ok) {
     let errorDetail = `Backend service error (HTTP ${response.status})`;
@@ -58,6 +67,7 @@ export async function analyzeResumeApi(
 export async function checkBackendHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/health`, {
+      credentials: 'include',
       method: 'GET',
       headers: { Accept: 'application/json' }
     });
@@ -66,3 +76,4 @@ export async function checkBackendHealth(): Promise<boolean> {
     return false;
   }
 }
+

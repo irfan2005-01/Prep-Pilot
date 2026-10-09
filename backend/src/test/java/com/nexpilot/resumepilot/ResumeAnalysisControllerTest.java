@@ -36,10 +36,19 @@ public class ResumeAnalysisControllerTest {
     @MockBean
     private GeminiAnalysisService geminiAnalysisService;
 
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentIdentityService identityService;
+
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentPersistenceService persistenceService;
+
     private ResumeAnalysisResponse mockResponse;
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.doNothing().when(identityService).requireAuthenticatedRequest();
+        when(identityService.resolveOrCreateStudent(any()))
+            .thenReturn(new com.nexpilot.resumepilot.model.StudentEntity(java.util.UUID.randomUUID(), "test-student-token"));
         ScoreCategoriesDto categories = new ScoreCategoriesDto(
             new ScoreCategoryDto("Role Keyword Match", 85, 35, "Strong match", "excellent"),
             new ScoreCategoryDto("Impact & Quantification", 80, 30, "Strong metrics", "good"),
@@ -88,6 +97,8 @@ public class ResumeAnalysisControllerTest {
 
         mockMvc.perform(multipart("/api/v1/resumes/analyze")
                 .file(file)
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .param("roleId", "full-stack-developer"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.roleId").value("full-stack-developer"))
@@ -112,6 +123,8 @@ public class ResumeAnalysisControllerTest {
 
         mockMvc.perform(multipart("/api/v1/resumes/analyze")
                 .file(file)
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .param("roleId", "quantum-teleportation-engineer"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("INVALID_ROLE"))

@@ -45,9 +45,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <Badge variant="orange" icon={<Sparkles size={13} />}>
               Team Nexora Presents
             </Badge>
-            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              National Hackathon Edition
-            </span>
           </div>
 
           {/* Main Editorial Display Headline */}

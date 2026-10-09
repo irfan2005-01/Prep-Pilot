@@ -86,7 +86,7 @@ export const SectionBreakdownCard: React.FC<SectionBreakdownCardProps> = ({ issu
             <div
               style={{
                 padding: '0.75rem 1rem',
-                backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                backgroundColor: 'rgba(32, 37, 43, 0.045)',
                 borderRadius: 'var(--radius-sm)',
                 borderLeft: '3px solid var(--accent-primary)',
                 fontSize: '0.82rem',
@@ -105,4 +105,5 @@ export const SectionBreakdownCard: React.FC<SectionBreakdownCardProps> = ({ issu
     </div>
   );
 };
+
 

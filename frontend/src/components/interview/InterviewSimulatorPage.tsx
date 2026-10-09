@@ -26,6 +26,7 @@ interface InterviewSimulatorPageProps {
   initialRoleId?: string;
   contextStrengths?: string[];
   contextSkillGaps?: string[];
+  initialSummary?: InterviewSummary | null;
   onNavigateToRoadmap?: () => void;
   onNavigateToAnalyzer?: () => void;
 }
@@ -36,17 +37,18 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
   initialRoleId = 'full-stack-developer',
   contextStrengths = [],
   contextSkillGaps = [],
+  initialSummary = null,
   onNavigateToRoadmap,
   onNavigateToAnalyzer,
 }) => {
-  const [phase, setPhase] = useState<SimulatorPhase>('setup');
+  const [phase, setPhase] = useState<SimulatorPhase>(initialSummary ? 'summary' : 'setup');
   const [interviewMode, setInterviewMode] = useState<InterviewMode>('voice');
   const [session, setSession] = useState<InterviewSessionStartResponse | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
   const [nextPendingQuestion, setNextPendingQuestion] = useState<InterviewQuestion | null>(null);
   const [isSessionFinished, setIsSessionFinished] = useState<boolean>(false);
   const [latestFeedback, setLatestFeedback] = useState<AnswerEvaluation | null>(null);
-  const [summary, setSummary] = useState<InterviewSummary | null>(null);
+  const [summary, setSummary] = useState<InterviewSummary | null>(initialSummary);
 
   const [isStarting, setIsStarting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

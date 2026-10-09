@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { TargetRole, ResumeAnalysisResult } from './types/resume';
 import type { PersonalizedRoadmap, RoadmapGenerationPayload } from './types/roadmap';
+import type { InterviewSummary } from './types/interview';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { HeroSection } from './components/landing/HeroSection';
@@ -10,23 +11,57 @@ import { AnalyzerPage } from './components/analyzer/AnalyzerPage';
 import { ResultsView } from './components/results/ResultsView';
 import { RoadmapView } from './components/roadmap/RoadmapView';
 import { InterviewSimulatorPage } from './components/interview/InterviewSimulatorPage';
+import { StudentDashboardPage } from './components/dashboard/StudentDashboardPage';
 import { BENCHMARK_RESULTS } from './data/benchmarkResults';
 import { BENCHMARK_ROADMAPS } from './data/benchmarkRoadmaps';
 import { DEFAULT_ROLE } from './data/roles';
 import { generateRoadmapApi } from './services/roadmapService';
+import { AuthPage } from './components/auth/AuthPage';
+import { logout, restoreSession, type AuthUser } from './services/authService';
+import { INITIAL_VIEW, navigationTransition, postAuthenticationView, resumeAnalysisTransition, type AppView } from './appNavigation';
+
+type View = AppView;
 
 export function App() {
-  const [activeView, setActiveView] = useState<'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview'>('home');
+  const [activeView, setActiveView] = useState<View>(INITIAL_VIEW);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [returnAfterAuth, setReturnAfterAuth] = useState<View>('analyzer');
+  const [authNotice, setAuthNotice] = useState('');
+  useEffect(() => { restoreSession().then(setUser).catch(() => setUser(null)).finally(() => setAuthReady(true)); }, []);
+  useEffect(() => {
+    if (!user) return;
+    const timer = window.setInterval(() => {
+      restoreSession().then((sessionUser) => {
+        if (!sessionUser) { setUser(null); setActiveView((view) => view === 'dashboard' || view === 'interview' || view === 'roadmap' ? 'login' : view); }
+      }).catch(() => { setUser(null); setActiveView((view) => view === 'dashboard' || view === 'interview' || view === 'roadmap' ? 'login' : view); });
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [user]);
+
+  const navigate = (view: View) => {
+    const transition = navigationTransition(view, Boolean(user), currentResult.isDemoSample);
+    if (transition.requiresAuth) { setReturnAfterAuth(transition.returnTo); setAuthNotice('Sign in or create an account to continue.'); }
+    setActiveView(transition.view);
+  };
   const [currentResult, setCurrentResult] = useState<ResumeAnalysisResult>(BENCHMARK_RESULTS[DEFAULT_ROLE.id]);
   const [currentRoadmap, setCurrentRoadmap] = useState<PersonalizedRoadmap | null>(
     BENCHMARK_ROADMAPS[DEFAULT_ROLE.id] || null
   );
+  const [currentInterviewSummary, setCurrentInterviewSummary] = useState<InterviewSummary | null>(null);
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [roadmapError, setRoadmapError] = useState<string | null>(null);
 
   const handleStartAnalysis = () => {
     setActiveView('analyzer');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const requireResumeAuth = () => {
+    const transition = resumeAnalysisTransition(Boolean(user));
+    setReturnAfterAuth(transition.returnTo);
+    setAuthNotice('Please sign in before selecting or uploading a resume. After signing in, choose your file to continue.');
+    setActiveView(transition.view);
   };
 
   const handleViewBenchmarkReport = (role: TargetRole) => {
@@ -97,6 +132,7 @@ export function App() {
   };
 
   const handleStartInterview = (roleOrResult?: TargetRole | ResumeAnalysisResult | string) => {
+    if (!user) { setReturnAfterAuth('interview'); setAuthNotice('Sign in to practice and save your interview progress.'); setActiveView('login'); return; }
     if (roleOrResult && typeof roleOrResult === 'object' && 'roleId' in roleOrResult) {
       // It's a ResumeAnalysisResult or TargetRole with roleId
       const roleId = roleOrResult.roleId;
@@ -105,16 +141,41 @@ export function App() {
         setCurrentResult(matched);
       }
     }
+    setCurrentInterviewSummary(null);
     setActiveView('interview');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleViewDashboardResume = (result: ResumeAnalysisResult) => {
+    setCurrentResult(result);
+    setActiveView('results');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewDashboardRoadmap = (roadmap: PersonalizedRoadmap) => {
+    setCurrentRoadmap(roadmap);
+    setActiveView('roadmap');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewDashboardInterview = (summary: InterviewSummary) => {
+    setCurrentInterviewSummary(summary);
+    setActiveView('interview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (activeView === 'login' || activeView === 'signup') return <AuthPage mode={activeView} notice={authNotice} onMode={setActiveView} onSuccess={(authenticatedUser) => { setUser(authenticatedUser); setAuthNotice(''); setActiveView(postAuthenticationView(returnAfterAuth)); }} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={navigate}
         onExploreSample={handleExploreSample}
+        user={user}
+        onSignIn={() => { setReturnAfterAuth('analyzer'); setAuthNotice(''); setActiveView('login'); }}
+        onSignUp={() => { setReturnAfterAuth('analyzer'); setAuthNotice(''); setActiveView('signup'); }}
+        onSignOut={async () => { try { await logout(); } finally { setUser(null); setActiveView('home'); } }}
       />
 
       <main style={{ flex: 1 }}>
@@ -133,6 +194,9 @@ export function App() {
           <AnalyzerPage
             onViewBenchmarkReport={handleViewBenchmarkReport}
             onAnalysisSuccess={handleAnalysisSuccess}
+            isAuthenticated={Boolean(user)}
+            authReady={authReady}
+            onRequireAuth={requireResumeAuth}
           />
         )}
 
@@ -147,7 +211,7 @@ export function App() {
 
         {activeView === 'roadmap' && (
           <RoadmapView
-            key={currentRoadmap?.roleId || 'default-roadmap'}
+            key={currentRoadmap?.persistenceId || currentRoadmap?.roleId || 'default-roadmap'}
             roadmap={currentRoadmap}
             isLoading={isGeneratingRoadmap}
             errorMessage={roadmapError}
@@ -160,15 +224,31 @@ export function App() {
 
         {activeView === 'interview' && (
           <InterviewSimulatorPage
+            key={currentInterviewSummary?.sessionId || 'fresh-interview'}
             initialRoleId={currentResult?.roleId || DEFAULT_ROLE.id}
             contextStrengths={currentResult?.strengths?.map((s) => s.title) || []}
             contextSkillGaps={currentResult?.keywords?.missingKeywords?.map((k) => k.keyword) || []}
+            initialSummary={currentInterviewSummary}
             onNavigateToRoadmap={() => {
               setActiveView('roadmap');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onNavigateToAnalyzer={() => {
               setActiveView('analyzer');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {activeView === 'dashboard' && (
+          <StudentDashboardPage
+            onViewResumeScorecard={handleViewDashboardResume}
+            onViewRoadmap={handleViewDashboardRoadmap}
+            onViewInterviewScorecard={handleViewDashboardInterview}
+            onNavigateToAnalyzer={handleStartAnalysis}
+            onNavigateToInterview={() => {
+              setCurrentInterviewSummary(null);
+              setActiveView('interview');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />

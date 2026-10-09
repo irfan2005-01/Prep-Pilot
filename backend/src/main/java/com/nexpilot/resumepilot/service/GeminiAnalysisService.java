@@ -415,6 +415,7 @@ public class GeminiAnalysisService {
             OUTPUT FORMAT REQUIREMENTS:
             You must output a single, valid JSON object matching the exact schema below. Do not wrap with markdown code blocks. Output raw JSON only.
             Provide exactly 3-4 strengths, 5-8 matched keywords, 4-6 missing keywords, 3-5 section issues, and 3-4 bullet improvements.
+            For every rewritten resume bullet, use only actions, tools, outcomes, and numbers explicitly supported by the supplied resume text. Never invent or infer achievements, employers, scale, or metrics. If a useful result or metric is missing, use a short bracketed placeholder such as [add a verified result] rather than making one up. Keep the original bullet verbatim.
             
             JSON SCHEMA:
             {

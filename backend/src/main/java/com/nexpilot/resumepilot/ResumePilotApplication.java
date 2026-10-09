@@ -63,6 +63,12 @@ public class ResumePilotApplication {
                                     System.setProperty("server.port", val);
                                 } else if ("CORS_ALLOWED_ORIGINS".equalsIgnoreCase(key) && System.getProperty("cors.allowed-origins") == null) {
                                     System.setProperty("cors.allowed-origins", val);
+                                } else if (("DB_URL".equalsIgnoreCase(key) || "SPRING_DATASOURCE_URL".equalsIgnoreCase(key)) && System.getProperty("spring.datasource.url") == null) {
+                                    System.setProperty("spring.datasource.url", val);
+                                } else if (("DB_USERNAME".equalsIgnoreCase(key) || "SPRING_DATASOURCE_USERNAME".equalsIgnoreCase(key)) && System.getProperty("spring.datasource.username") == null) {
+                                    System.setProperty("spring.datasource.username", val);
+                                } else if (("DB_PASSWORD".equalsIgnoreCase(key) || "SPRING_DATASOURCE_PASSWORD".equalsIgnoreCase(key)) && System.getProperty("spring.datasource.password") == null) {
+                                    System.setProperty("spring.datasource.password", val);
                                 }
                             }
                         }
@@ -71,6 +77,53 @@ public class ResumePilotApplication {
                     log.warn("Failed to read {}: {}", pathStr, e.getMessage());
                 }
             }
+        }
+
+        configureDatabaseFallback();
+    }
+
+    private static void configureDatabaseFallback() {
+        String customUrl = System.getProperty("spring.datasource.url", System.getenv("DB_URL"));
+        if (customUrl == null) {
+            customUrl = System.getenv("SPRING_DATASOURCE_URL");
+        }
+
+        // If no custom URL is provided or it targets default localhost:5432, check availability
+        if (customUrl == null || customUrl.contains("localhost:5432") || customUrl.contains("127.0.0.1:5432")) {
+            boolean pgAvailable = isPortReachable("localhost", 5432, 300);
+            if (!pgAvailable) {
+                if (isProductionEnvironment()) {
+                    throw new IllegalStateException("PostgreSQL is unavailable. Production startup will not use the in-memory H2 fallback.");
+                }
+                log.info("PostgreSQL service not detected on localhost:5432. Enabling resilient in-memory database with PostgreSQL compatibility.");
+                System.setProperty("spring.datasource.url", "jdbc:h2:mem:preppilot;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1");
+                System.setProperty("spring.datasource.driver-class-name", "org.h2.Driver");
+                System.setProperty("spring.datasource.username", "sa");
+                System.setProperty("spring.datasource.password", "");
+                System.setProperty("spring.jpa.database-platform", "org.hibernate.dialect.H2Dialect");
+            } else {
+                log.info("Detected active PostgreSQL service on localhost:5432.");
+            }
+        } else {
+            log.info("Configured custom database datasource URL.");
+        }
+    }
+
+    private static boolean isProductionEnvironment() {
+        String profiles = System.getProperty("spring.profiles.active", System.getenv("SPRING_PROFILES_ACTIVE"));
+        String appEnvironment = System.getProperty("APP_ENV", System.getenv("APP_ENV"));
+        return "production".equalsIgnoreCase(appEnvironment)
+            || (profiles != null && java.util.Arrays.stream(profiles.split(","))
+                .map(String::trim)
+                .anyMatch(profile -> "prod".equalsIgnoreCase(profile) || "production".equalsIgnoreCase(profile)));
+    }
+
+    private static boolean isPortReachable(String host, int port, int timeoutMs) {
+        try (java.net.Socket socket = new java.net.Socket()) {
+            socket.connect(new java.net.InetSocketAddress(host, port), timeoutMs);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

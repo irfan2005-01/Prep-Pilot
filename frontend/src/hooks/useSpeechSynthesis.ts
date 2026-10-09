@@ -4,6 +4,7 @@ export interface UseSpeechSynthesisReturn {
   isSupported: boolean;
   isSpeaking: boolean;
   isPaused: boolean;
+  error: string | null;
   voices: SpeechSynthesisVoice[];
   selectedVoice: SpeechSynthesisVoice | null;
   speak: (text: string, onEnd?: () => void) => void;
@@ -19,6 +20,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   });
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
@@ -62,6 +64,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     activeUtteranceRef.current = null;
     setIsSpeaking(false);
     setIsPaused(false);
+    setError(null);
   }, []);
 
   const speak = useCallback(
@@ -70,6 +73,8 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
         if (onEnd) onEnd();
         return;
       }
+
+      setError(null);
 
       // Stop any prior speech to prevent collision
       window.speechSynthesis.cancel();
@@ -100,10 +105,13 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
         if (onEnd) onEnd();
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
         setIsSpeaking(false);
         setIsPaused(false);
         activeUtteranceRef.current = null;
+        if (event.error !== 'canceled' && event.error !== 'interrupted') {
+          setError('Alex could not play audio. Check your browser audio settings or use text mode.');
+        }
         if (onEnd) onEnd();
       };
 
@@ -150,6 +158,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     isSupported,
     isSpeaking,
     isPaused,
+    error,
     voices,
     selectedVoice,
     speak,

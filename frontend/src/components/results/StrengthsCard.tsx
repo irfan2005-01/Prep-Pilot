@@ -67,7 +67,7 @@ export const StrengthsCard: FC<StrengthsCardProps> = ({ strengths }) => {
               <div
                 style={{
                   padding: '0.5rem 0.85rem',
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'rgba(32, 37, 43, 0.045)',
                   borderRadius: 'var(--radius-sm)',
                   fontSize: '0.78rem',
                   fontFamily: 'var(--font-mono)',
@@ -88,4 +88,5 @@ export const StrengthsCard: FC<StrengthsCardProps> = ({ strengths }) => {
     </div>
   );
 };
+
 

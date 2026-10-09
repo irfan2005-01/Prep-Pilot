@@ -63,7 +63,7 @@ export const ResultsView: FC<ResultsViewProps> = ({
                     Live AI ATS Diagnostic
                   </Badge>
                   <Badge variant="orange" icon={<Sparkles size={12} />}>
-                    Gemini 3.5 Rubric Evaluation
+                    AI resume scoring
                   </Badge>
                   <Badge variant="neutral">
                     {activeResult.fileName}
@@ -88,7 +88,7 @@ export const ResultsView: FC<ResultsViewProps> = ({
                 marginBottom: '0.35rem'
               }}
             >
-              {isLive ? `ATS Diagnostic — ${activeResult.roleTitle}` : 'ATS Scorecard — Reference Example'}
+              {isLive ? `Your resume for ${activeResult.roleTitle}` : 'Resume score example'}
             </h1>
 
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
@@ -231,7 +231,7 @@ export const ResultsView: FC<ResultsViewProps> = ({
           </div>
         )}
 
-        {/* Phase 3 Connected Experience Callout Banner */}
+        {/* Next-step callout */}
         <div
           style={{
             padding: '1.5rem 1.75rem',
@@ -249,7 +249,7 @@ export const ResultsView: FC<ResultsViewProps> = ({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
               <Badge variant="orange" icon={<Compass size={12} />}>
-                Phase 3: Connected Learning Experience
+                Personalized learning
               </Badge>
             </div>
             <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', marginBottom: '0.35rem' }}>
@@ -271,6 +271,25 @@ export const ResultsView: FC<ResultsViewProps> = ({
           </button>
         </div>
 
+        <section aria-labelledby="friendly-results-title" style={{ margin: '2rem 0' }}>
+          <h2 id="friendly-results-title" style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>Here&apos;s how your resume looks for this role.</h2>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+            <div aria-label={`Resume match score ${activeResult.score.overall} out of 100`} role="img" style={{ width: 86, height: 86, borderRadius: '50%', display: 'grid', placeItems: 'center', background: `conic-gradient(var(--accent-primary) ${Math.max(0, Math.min(100, activeResult.score.overall))}%, var(--border-subtle) 0)` }}>
+              <span style={{ width: 68, height: 68, borderRadius: '50%', background: 'var(--bg-card)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{activeResult.score.overall}<small style={{ fontSize: '.65rem' }}>/100</small></span>
+            </div>
+            <div><strong>{activeResult.score.verdict === 'Ready for Application' ? 'Strong match' : activeResult.score.verdict === 'Strong Contender' ? 'Good start, with a few improvements' : 'Needs some important updates'}</strong><p style={{ color: 'var(--text-secondary)', margin: '.3rem 0 0' }}>This score compares the resume with the selected role&apos;s criteria. It does not predict hiring outcomes or guarantee that a screening system will accept it.</p></div>
+          </div>
+          {activeResult.isDemoSample && <p role="status" className="card" style={{ padding: '1rem', marginTop: '1rem' }}>This is a reference example, not an analysis of your resume.</p>}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+            <div className="card" style={{ padding: '1.25rem' }}><h3>What you already do well</h3><ul>{activeResult.strengths.slice(0, 3).map((item) => <li key={item.id}><strong>{item.title}:</strong> {item.description}</li>)}</ul></div>
+            <div className="card" style={{ padding: '1.25rem' }}><h3>Three improvements to consider</h3><ol>{activeResult.sectionIssues.filter((issue) => issue.severity !== 'positive').slice(0, 3).map((issue) => <li key={issue.id}><strong>{issue.title}:</strong> {issue.recommendation} <span style={{ color: 'var(--text-muted)' }}>This may help recruiters and screening software find relevant details more easily.</span></li>)}{activeResult.sectionIssues.filter((issue) => issue.severity !== 'positive').length === 0 && activeResult.keywords.missingKeywords.slice(0, 3).map((item) => <li key={item.keyword}><strong>{item.keyword}:</strong> {item.rationale} {item.suggestedContext}</li>)}</ol></div>
+          </div>
+          {activeResult.bulletImprovements[0] && <div className="card" style={{ padding: '1.25rem', marginTop: '1rem' }}><h3>Example wording improvement</h3><p><strong>Before:</strong> {activeResult.bulletImprovements[0].original}</p><p><strong>Suggested structure:</strong> {activeResult.bulletImprovements[0].improved}</p><p style={{ color: 'var(--text-muted)', fontSize: '.85rem' }}>Use only details and results that are true for your experience; verify every number before adding it.</p></div>}
+          <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1rem' }}><button type="button" className="btn btn-outline" onClick={() => { const details = document.getElementById('technical-findings') as HTMLDetailsElement | null; if (details) { details.open = true; details.scrollIntoView({ behavior: 'smooth' }); } }}>See What I Can Improve</button><button type="button" className="btn btn-primary" onClick={() => onGenerateRoadmap(activeResult)}>Build My Learning Plan</button></div>
+        </section>
+        <details id="technical-findings" style={{ marginTop: '2rem' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '1rem', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>Detailed findings (including ATS terms)</summary>
+          <div style={{ paddingTop: '1rem' }}>
         {/* 1. Mandatory Disclaimer Banner */}
         <DisclaimerBanner />
 
@@ -292,6 +311,8 @@ export const ResultsView: FC<ResultsViewProps> = ({
 
         {/* 6. Google XYZ Bullet Point Transformations */}
         <BulletTransformCard improvements={activeResult.bulletImprovements} />
+          </div>
+        </details>
 
         {/* Bottom Navigation CTA */}
         <div

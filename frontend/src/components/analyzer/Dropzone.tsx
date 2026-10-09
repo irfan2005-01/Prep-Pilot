@@ -9,7 +9,7 @@ export interface DropzoneProps {
 }
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc'] as const;
+const ALLOWED_EXTENSIONS = ['pdf', 'docx'] as const;
 
 function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return '0 Bytes';
@@ -53,7 +53,7 @@ export const Dropzone: FC<DropzoneProps> = ({
       name: file.name,
       size: file.size,
       formattedSize: formatBytes(file.size),
-      extension: extension as 'pdf' | 'docx' | 'doc',
+      extension: extension as 'pdf' | 'docx',
       lastModified: file.lastModified
     };
 
@@ -110,7 +110,7 @@ export const Dropzone: FC<DropzoneProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         style={{ display: 'none' }}
         onChange={handleFileInputChange}
         tabIndex={-1}

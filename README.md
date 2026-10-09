@@ -39,7 +39,8 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 | **AI Integration** | Google Gemini API (gemini-3.5-flash / gemini-2.5-flash, server-side only) | **Phase 2, 3 & 4 Complete** |
 | **Resource Verification** | In-Memory Curated Allowlist Catalog (21 verified domains) | **Phase 3 & 4 Complete** |
 | **Session State** | Thread-safe in-memory session manager with TTL (2h) & scheduled eviction | **Phase 4 Complete** |
-| **Database** | PostgreSQL | *Phase 5 Planned* |
+| **Database & Persistence** | PostgreSQL + Spring Data JPA + Flyway Migrations (with resilient dev/test fallback) | **Phase 5 Complete** |
+| **Candidate Dashboard** | Unified Analytics & Historical Practice Review (Zero-recomputation) | **Phase 5 Complete** |
 
 ---
 
@@ -324,7 +325,21 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 - **Interview Simulator Health**: `GET /api/v1/interviews/health`
   - Response: `200 OK` with `{"status": "UP", "activeSessions": 1}`.
 
-### 5. System Health Check
+### 5. Student Dashboard & Persistence Endpoints (Phase 5)
+- All student dashboard endpoints accept the `X-Student-Token` header. If absent or invalid, a new cryptographic token is assigned and returned via response headers.
+- **Get Dashboard Overview**: `GET /api/v1/student/dashboard`
+  - Response: Aggregate metrics (total resume analyses, average ATS score, active roadmaps, completed milestones, interview sessions completed, average interview score) plus recent activity lists.
+- **List Resumes**: `GET /api/v1/student/analyses`
+- **Get Resume Scorecard**: `GET /api/v1/student/analyses/{id}` (reconstructs the full diagnostic report without re-querying Gemini)
+- **List Roadmaps**: `GET /api/v1/student/roadmaps`
+- **Get Roadmap Detail**: `GET /api/v1/student/roadmaps/{id}`
+- **Update Milestone Status**: `PUT /api/v1/student/roadmaps/{id}/milestones/{milestoneKey}`
+  - Body: `{"status": "COMPLETED"}` (`NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `SKIPPED`)
+- **List Interviews**: `GET /api/v1/student/interviews`
+- **Get Interview Scorecard**: `GET /api/v1/student/interviews/{sessionId}` (reconstructs per-question feedback & rubrics)
+- **Clear All Student Data**: `DELETE /api/v1/student/data`
+
+### 6. System Health Check
 - **URL**: `GET /api/v1/health`
 - **Response**: `200 OK`
   ```json
@@ -337,18 +352,18 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 
 ---
 
-## Boundaries & Next Phases
+## Boundaries & Completed Phases
 
-- **Phase 1, 2, 3 & 4 Completed**:
+- **Phase 1, 2, 3, 4, 4.1 & 5 Completed**:
   - Full-featured React 19 UI with responsive, accessible editorial design and tab navigation.
   - Real Java 21 + Spring Boot 3 backend with PDFBox/POI text parsing.
   - Server-side Gemini AI integration with 4-part weighted scoring rubric.
   - Clear delineation between live AI evaluations and pre-calibrated reference benchmarks.
   - Personalized Learning Roadmap Engine powered by Gemini AI and an allowlisted 100% free learning resource catalog.
-  - Interactive milestone checklist and progress tracking persisted in `localStorage`.
   - AI Mock Interview Simulator with one-question-at-a-time pacing, STAR behavioral rubrics, architectural technical evaluation, thread-safe session lifecycle, and diagnostic scorecards.
+  - Voice AI Interviewer (Phase 4.1) with Web Speech API speech-to-text, natural voice synthesis, real-time waveform visualizers, manual transcript correction, and microphone health diagnostics.
+  - PostgreSQL Persistence & Student Dashboard (Phase 5) with Flyway migrations, JPA entities, scoped anonymous student token ownership (`X-Student-Token`), milestone checklist synchronization, zero re-computation historical review, and full data deletion controls.
 - **Upcoming Phases**:
-  - **Phase 5**: PostgreSQL persistence for historical interview scorecards and applicant tracking.
   - **Phase 6**: Production containerization (Docker Compose) and cloud deployment.
 
 #   P r e p - P i l o t  

@@ -740,7 +740,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     style={{
                       padding: '1.25rem',
                       borderTop: '1px solid var(--border-subtle)',
-                      backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                      backgroundColor: 'rgba(32, 37, 43, 0.035)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '1rem'
@@ -938,3 +938,4 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
     </div>
   );
 };
+

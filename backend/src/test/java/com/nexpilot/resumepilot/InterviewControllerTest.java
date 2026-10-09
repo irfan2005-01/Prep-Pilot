@@ -43,10 +43,23 @@ public class InterviewControllerTest {
     @MockBean
     private InterviewSessionManager sessionManager;
 
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentIdentityService identityService;
+
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentPersistenceService persistenceService;
+
+    @MockBean
+    private com.nexpilot.resumepilot.repository.InterviewSessionRepository interviewSessionRepository;
+
     private InterviewQuestionDto sampleQuestion;
 
     @BeforeEach
     void setUp() {
+        when(identityService.resolveOrCreateStudent(any()))
+            .thenReturn(new com.nexpilot.resumepilot.model.StudentEntity(java.util.UUID.randomUUID(), "test-student-token"));
+        when(interviewSessionRepository.existsBySessionIdAndStudent(any(), any())).thenReturn(true);
+
         sampleQuestion = new InterviewQuestionDto(
             "q-1",
             1,
@@ -85,6 +98,8 @@ public class InterviewControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/interviews/start")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -108,6 +123,8 @@ public class InterviewControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/interviews/start")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest());
@@ -141,6 +158,8 @@ public class InterviewControllerTest {
         SubmitAnswerRequest request = new SubmitAnswerRequest("q-1", "ConcurrentHashMap uses segmented locking and CAS operations for thread-safe concurrent reads and writes.");
 
         mockMvc.perform(post("/api/v1/interviews/test-session-123/answer")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -158,10 +177,26 @@ public class InterviewControllerTest {
         SubmitAnswerRequest request = new SubmitAnswerRequest("q-1", "A valid answer with enough characters to pass validation.");
 
         mockMvc.perform(post("/api/v1/interviews/invalid-id/answer")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.error").value("Session Not Found"));
+    }
+
+    @Test
+    @DisplayName("POST answer rejects another student's interview session")
+    void testSubmitAnswerRejectsSessionOwnedByAnotherStudent() throws Exception {
+        when(interviewSessionRepository.existsBySessionIdAndStudent(eq("other-student-session"), any())).thenReturn(false);
+        SubmitAnswerRequest request = new SubmitAnswerRequest("q-1", "A valid answer with enough characters to pass validation.");
+
+        mockMvc.perform(post("/api/v1/interviews/other-student-session/answer")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNotFound());
     }
 
     @Test

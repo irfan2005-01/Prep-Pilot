@@ -51,7 +51,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
           <Badge variant="orange" icon={<Brain size={13} />}>
-            Phase 4 • AI Mock Interview Simulator
+            Mock Interview Practice
           </Badge>
         </div>
         <h1

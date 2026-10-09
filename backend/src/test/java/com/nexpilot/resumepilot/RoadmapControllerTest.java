@@ -41,10 +41,22 @@ public class RoadmapControllerTest {
     @MockBean
     private RoadmapGenerationService roadmapGenerationService;
 
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentIdentityService identityService;
+
+    @MockBean
+    private com.nexpilot.resumepilot.service.StudentPersistenceService persistenceService;
+
     private PersonalizedRoadmapResponse mockRoadmap;
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.doNothing().when(identityService).requireAuthenticatedRequest();
+        when(identityService.resolveOrCreateStudent(any()))
+            .thenReturn(new com.nexpilot.resumepilot.model.StudentEntity(java.util.UUID.randomUUID(), "test-student-token"));
+        com.nexpilot.resumepilot.model.RoadmapEntity savedRoadmap = new com.nexpilot.resumepilot.model.RoadmapEntity();
+        savedRoadmap.setId(java.util.UUID.randomUUID());
+        when(persistenceService.saveRoadmap(any(), any())).thenReturn(savedRoadmap);
         mockRoadmap = new PersonalizedRoadmapResponse(
             "data-analyst",
             "Data Analyst",
@@ -93,6 +105,8 @@ public class RoadmapControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/roadmaps/generate")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -115,6 +129,8 @@ public class RoadmapControllerTest {
         );
 
         mockMvc.perform(post("/api/v1/roadmaps/generate")
+                .sessionAttr(com.nexpilot.resumepilot.controller.AuthController.STUDENT_ID, "test-account")
+                .sessionAttr("csrf", "test-csrf").header("X-CSRF-Token", "test-csrf")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())

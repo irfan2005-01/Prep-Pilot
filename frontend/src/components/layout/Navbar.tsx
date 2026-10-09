@@ -1,16 +1,22 @@
 import { useState, type FC } from 'react';
-import { Compass, FileSearch, Layers, Menu, X, Brain } from 'lucide-react';
+import { Compass, FileSearch, Layers, Menu, X, Brain, LayoutDashboard } from 'lucide-react';
+import type { AuthUser } from '../../services/authService';
 
 export interface NavbarProps {
-  activeView: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview';
-  setActiveView: (view: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview') => void;
+  activeView: string;
+  setActiveView: (view: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview' | 'dashboard') => void;
   onExploreSample: () => void;
+  user: AuthUser | null;
+  onSignIn: () => void;
+  onSignUp: () => void;
+  onSignOut: () => void;
 }
 
 export const Navbar: FC<NavbarProps> = ({
   activeView,
   setActiveView,
-  onExploreSample
+  onExploreSample,
+  user, onSignIn, onSignUp, onSignOut
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -18,7 +24,7 @@ export const Navbar: FC<NavbarProps> = ({
     <header
       role="banner"
       style={{
-        backgroundColor: 'rgba(22, 23, 25, 0.95)',
+        backgroundColor: 'rgba(255, 255, 255, 0.96)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
         position: 'sticky',
@@ -48,62 +54,7 @@ export const Navbar: FC<NavbarProps> = ({
             }}
             aria-label="Prep Pilot Homepage"
           >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--accent-subtle)',
-                border: '1px solid var(--accent-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent-primary)',
-                boxShadow: '0 2px 8px rgba(232, 90, 11, 0.2)'
-              }}
-            >
-              <Compass size={20} strokeWidth={2.2} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.2rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    letterSpacing: '-0.01em',
-                    lineHeight: 1.2
-                  }}
-                >
-                  Prep Pilot
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.68rem',
-                    padding: '0.1rem 0.35rem',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    borderRadius: 'var(--radius-sm)',
-                    color: 'var(--text-muted)',
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600
-                  }}
-                >
-                  Nexora
-                </span>
-              </div>
-              <p
-                style={{
-                  fontSize: '0.68rem',
-                  color: 'var(--text-muted)',
-                  marginTop: '1px',
-                  lineHeight: 1
-                }}
-              >
-                Your co-pilot from resume to offer
-              </p>
-            </div>
+            <img src="/brand/prep-pilot-logo.png" alt="Prep Pilot — your co-pilot from resume to offer" style={{ display: 'block', width: 'clamp(138px, 17vw, 178px)', height: 'auto', borderRadius: '4px' }} />
           </button>
 
           {/* Desktop Navigation Links */}
@@ -168,6 +119,17 @@ export const Navbar: FC<NavbarProps> = ({
             </button>
             <button
               type="button"
+              className={`tab-btn ${activeView === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveView('dashboard')}
+              style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <LayoutDashboard size={15} />
+                Dashboard
+              </span>
+            </button>
+            <button
+              type="button"
               className={`tab-btn ${activeView === 'architecture' ? 'active' : ''}`}
               onClick={() => setActiveView('architecture')}
               style={{ fontSize: '0.84rem', padding: '0.45rem 0.65rem' }}
@@ -189,6 +151,7 @@ export const Navbar: FC<NavbarProps> = ({
             }}
             className="desktop-actions"
           >
+            {user ? <><span style={{ color: 'var(--text-secondary)', fontSize: '.8rem' }}>{user.name}</span><button className="btn btn-outline btn-sm" onClick={onSignOut}>Sign out</button></> : <><button className="btn btn-ghost btn-sm" onClick={onSignIn}>Sign in</button><button className="btn btn-primary btn-sm" onClick={onSignUp}>Create account</button></>}
             <button
               type="button"
               className="btn btn-outline btn-sm"
@@ -233,6 +196,9 @@ export const Navbar: FC<NavbarProps> = ({
               gap: '0.4rem'
             }}
           >
+            <div style={{ display: 'flex', gap: '.5rem' }}>
+              {user ? <><span style={{ flex: 1, alignSelf: 'center', color: 'var(--text-secondary)' }}>{user.name}</span><button className="btn btn-outline" onClick={() => { onSignOut(); setMobileMenuOpen(false); }}>Sign out</button></> : <><button className="btn btn-outline" style={{ flex: 1 }} onClick={() => { onSignIn(); setMobileMenuOpen(false); }}>Sign in</button><button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { onSignUp(); setMobileMenuOpen(false); }}>Create account</button></>}
+            </div>
             <button
               type="button"
               className={`btn btn-secondary ${activeView === 'home' ? 'btn-primary' : ''}`}
@@ -254,7 +220,7 @@ export const Navbar: FC<NavbarProps> = ({
               }}
             >
               <FileSearch size={16} />
-              Resume Analyzer (Phase 1)
+              Resume Analyzer
             </button>
             <button
               type="button"
@@ -265,7 +231,7 @@ export const Navbar: FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
               }}
             >
-              ATS Scorecard Design
+              Resume Results
             </button>
             <button
               type="button"
@@ -277,7 +243,7 @@ export const Navbar: FC<NavbarProps> = ({
               }}
             >
               <Compass size={16} />
-              Learning Roadmap (Phase 3)
+              Learning Roadmap
             </button>
             <button
               type="button"
@@ -289,7 +255,19 @@ export const Navbar: FC<NavbarProps> = ({
               }}
             >
               <Brain size={16} />
-              Mock Interview (Phase 4)
+              Mock Interview
+            </button>
+            <button
+              type="button"
+              className={`btn btn-secondary ${activeView === 'dashboard' ? 'btn-primary' : ''}`}
+              style={{ justifyContent: 'flex-start' }}
+              onClick={() => {
+                setActiveView('dashboard');
+                setMobileMenuOpen(false);
+              }}
+            >
+              <LayoutDashboard size={16} />
+              Student Dashboard
             </button>
             <button
               type="button"
@@ -301,7 +279,7 @@ export const Navbar: FC<NavbarProps> = ({
               }}
             >
               <Layers size={16} />
-              Architecture & Roadmap
+              System Architecture
             </button>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button

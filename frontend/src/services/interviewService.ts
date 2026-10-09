@@ -4,8 +4,9 @@ import type {
   SubmitAnswerResponse,
   InterviewSummary
 } from '../types/interview';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { getAuthHeaders, extractAndSaveToken } from './dashboardService';
+import { getCsrfHeaders } from './authService';
+import { API_BASE_URL } from './apiConfig';
 
 export class InterviewApiError extends Error {
   code: string;
@@ -26,14 +27,21 @@ export async function startInterviewApi(
   const url = `${API_BASE_URL}/api/v1/interviews/start`;
 
   try {
+    const authHeaders = getAuthHeaders();
+    const csrfHeaders = await getCsrfHeaders();
     const response = await fetch(url, {
+      credentials: 'include',
       method: 'POST',
       headers: {
+        ...authHeaders,
+        ...csrfHeaders,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(config),
       signal,
     });
+
+    extractAndSaveToken(response.headers);
 
     if (!response.ok) {
       let errorMsg = `Interview start failed with status ${response.status}`;
@@ -72,9 +80,14 @@ export async function submitAnswerApi(
   const url = `${API_BASE_URL}/api/v1/interviews/${encodeURIComponent(sessionId)}/answer`;
 
   try {
+    const authHeaders = getAuthHeaders();
+    const csrfHeaders = await getCsrfHeaders();
     const response = await fetch(url, {
+      credentials: 'include',
       method: 'POST',
       headers: {
+        ...authHeaders,
+        ...csrfHeaders,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -84,6 +97,8 @@ export async function submitAnswerApi(
       }),
       signal,
     });
+
+    extractAndSaveToken(response.headers);
 
     if (!response.ok) {
       let errorMsg = `Answer evaluation failed with status ${response.status}`;
@@ -119,10 +134,19 @@ export async function finishInterviewApi(
   const url = `${API_BASE_URL}/api/v1/interviews/${encodeURIComponent(sessionId)}/finish`;
 
   try {
+    const authHeaders = getAuthHeaders();
+    const csrfHeaders = await getCsrfHeaders();
     const response = await fetch(url, {
+      credentials: 'include',
       method: 'POST',
+      headers: {
+        ...authHeaders,
+        ...csrfHeaders,
+      },
       signal,
     });
+
+    extractAndSaveToken(response.headers);
 
     if (!response.ok) {
       let errorMsg = `Failed to generate interview summary (${response.status})`;
@@ -158,4 +182,5 @@ export async function checkInterviewHealthApi(signal?: AbortSignal): Promise<{ s
   }
   return await response.json();
 }
+
 

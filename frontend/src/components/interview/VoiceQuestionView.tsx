@@ -17,7 +17,7 @@ import {
   Loader2,
   Settings
 } from 'lucide-react';
-import { VoiceVisualizer, type VoiceInterviewerState } from './VoiceVisualizer';
+import { CinematicParticleWave, type AssistantVisualState } from '../assistant/CinematicParticleWave';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
 
@@ -47,6 +47,7 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
   const [clientError, setClientError] = useState<string | null>(null);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const hasSpokenQuestionRef = useRef<string | null>(null);
+  const pendingQuestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     isSupported: isRecSupported,
@@ -63,6 +64,7 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
   const {
     isSupported: isSynthSupported,
     isSpeaking,
+    error: synthError,
     voices,
     selectedVoice,
     speak,
@@ -77,18 +79,20 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
   const currentTranscript = isEditingTranscript ? editedText : transcript;
 
   // Derive visualizer state
-  const visualizerState: VoiceInterviewerState = isSubmitting
-    ? 'processing'
-    : isSpeaking
-    ? 'speaking'
-    : isListening
-    ? 'listening'
-    : 'idle';
+  const visualizerState: AssistantVisualState = clientError || recError || synthError
+    ? 'error'
+    : isSubmitting
+      ? 'thinking'
+      : isSpeaking
+        ? 'speaking'
+        : isListening
+          ? 'listening'
+          : 'idle';
 
   // Speak question aloud upon entering question
   useEffect(() => {
-    if (hasSpokenQuestionRef.current !== question.id && isSynthSupported) {
-      hasSpokenQuestionRef.current = question.id;
+    const questionText = question.questionText?.trim();
+    if (questionText && question.id && hasSpokenQuestionRef.current !== question.id && isSynthSupported) {
       resetTranscript();
       setEditedText('');
       setIsEditingTranscript(false);
@@ -96,21 +100,29 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
 
       let introText = '';
       if (question.isFollowUp) {
-        introText = `Here is a follow-up question based on your response: ${question.questionText}`;
+        introText = `Here is a follow-up question based on your response: ${questionText}`;
       } else if (currentNumber === 1) {
-        introText = `Welcome to your mock interview session. I'm Alex. Let's begin with question one: ${question.questionText}`;
+        introText = `Welcome to your mock interview session. I'm Alex. Let's begin with question one: ${questionText}`;
       } else {
-        introText = `Question ${currentNumber}: ${question.questionText}`;
+        introText = `Question ${currentNumber}: ${questionText}`;
       }
 
-      // Small delay to allow audio context readiness
-      const timer = setTimeout(() => {
+      // Mark only when playback is actually dispatched. Strict Mode may run and
+      // clean up an effect before its delayed callback has fired.
+      pendingQuestionTimerRef.current = setTimeout(() => {
+        hasSpokenQuestionRef.current = question.id;
+        pendingQuestionTimerRef.current = null;
         speak(introText, () => {
-          // Finished speaking
+          // Playback completion is reflected by the synthesis hook.
         });
       }, 350);
 
-      return () => clearTimeout(timer);
+      return () => {
+        if (pendingQuestionTimerRef.current !== null) {
+          clearTimeout(pendingQuestionTimerRef.current);
+          pendingQuestionTimerRef.current = null;
+        }
+      };
     }
   }, [question.id, question.isFollowUp, question.questionText, currentNumber, isSynthSupported, speak, resetTranscript]);
 
@@ -358,11 +370,14 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
       </div>
 
       {/* Voice Visualizer Avatar */}
-      <VoiceVisualizer
-        state={visualizerState}
-        interviewerName="Alex"
-        roleTitle={`AI ${question.category === 'behavioral' ? 'Behavioral' : 'Technical'} Evaluator`}
-      />
+      <section className="voice-cinematic-stage" aria-label="Alex voice activity">
+        <CinematicParticleWave state={visualizerState} />
+        <div className="voice-cinematic-copy" aria-live="polite">
+          <span>PREP PILOT · AI INTERVIEWER</span>
+          <h2>{isSubmitting ? 'Thinking through your answer' : isSpeaking ? 'Alex is speaking' : isListening ? 'I’m listening' : 'Ready when you are'}</h2>
+          <p>{roleTitle}</p>
+        </div>
+      </section>
 
       {/* Main Question Card */}
       <div className="card card-elevated" style={{ padding: '2rem 2.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -732,7 +747,7 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
         </div>
 
         {/* Client Error Notice */}
-        {clientError && (
+        {(clientError || synthError) && (
           <div
             style={{
               width: '100%',
@@ -749,7 +764,7 @@ export const VoiceQuestionView: React.FC<VoiceQuestionViewProps> = ({
             }}
           >
             <AlertCircle size={16} color="#f87171" style={{ flexShrink: 0 }} />
-            <span>{clientError}</span>
+            <span>{clientError || synthError}</span>
           </div>
         )}
 

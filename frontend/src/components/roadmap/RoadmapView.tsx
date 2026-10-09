@@ -1,5 +1,6 @@
 import { useState, type FC } from 'react';
 import type { PersonalizedRoadmap } from '../../types/roadmap';
+import { updateMilestoneProgress } from '../../services/dashboardService';
 import { Badge } from '../ui/Badge';
 import {
   Compass,
@@ -38,40 +39,27 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
   onAnalyzeAnother,
   onStartInterview
 }) => {
-  const storageKey = roadmap ? `prep_pilot_roadmap_progress_${roadmap.roleId}` : '';
-
   const [completedMilestones, setCompletedMilestones] = useState<string[]>(() => {
-    if (!storageKey) return [];
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    if (roadmap?.milestoneCompletion) return Object.entries(roadmap.milestoneCompletion).filter(([, complete]) => complete).map(([id]) => id);
+    return [];
   });
 
-  const toggleMilestone = (id: string) => {
-    setCompletedMilestones((prev) => {
-      const next = prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id];
-      try {
-        if (storageKey) {
-          localStorage.setItem(storageKey, JSON.stringify(next));
-        }
-      } catch {
-        // Local storage full or private mode
-      }
-      return next;
-    });
+  const toggleMilestone = async (id: string) => {
+    const completed = !completedMilestones.includes(id);
+    if (roadmap?.persistenceId) {
+      try { await updateMilestoneProgress(roadmap.persistenceId, id, completed); }
+      catch { return; }
+    }
+    setCompletedMilestones((prev) => completed ? [...prev, id] : prev.filter((m) => m !== id));
   };
 
-  const handleResetProgress = () => {
+  const handleResetProgress = async () => {
     if (window.confirm('Reset your progress checklist for this roadmap?')) {
+      if (roadmap?.persistenceId) {
+        try { await Promise.all(roadmap.milestones.map((milestone) => updateMilestoneProgress(roadmap.persistenceId!, milestone.id, false))); }
+        catch { return; }
+      }
       setCompletedMilestones([]);
-      try {
-        if (storageKey) {
-          localStorage.removeItem(storageKey);
-        }
-      } catch {}
     }
   };
 
@@ -99,7 +87,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
             </div>
 
             <Badge variant="orange" icon={<Compass size={12} />} style={{ marginBottom: '1rem' }}>
-              Gemini 3.5 Curriculum Engine
+              Personalized Roadmap
             </Badge>
 
             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', marginBottom: '0.5rem' }}>
@@ -264,7 +252,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                   Personalized AI Learning Track
                 </Badge>
                 <Badge variant="orange" icon={<Sparkles size={12} />}>
-                  Gemini 3.5 Curriculum Engine
+                  Personalized Roadmap
                 </Badge>
                 <Badge variant="neutral">
                   Role: {roadmap.roleTitle}
@@ -310,7 +298,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <div>
               <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600 }}>
-                Roadmap Completion Status
+                Your progress
               </span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginTop: '0.2rem' }}>
                 <span style={{ fontSize: '1.75rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--accent-primary)' }}>
@@ -326,7 +314,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estimated Investment</span>
                 <div style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  ~{roadmap.totalEstimatedHours} Study Hours ({roadmap.totalWeeks} Weeks)
+                  About {roadmap.totalEstimatedHours} hours · about {roadmap.totalWeeks} weeks
                 </div>
               </div>
 
@@ -377,7 +365,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
           <div className="card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <Compass size={18} color="var(--accent-primary)" />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Diagnosed Skill Gaps to Bridge</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Skills to learn next</h3>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -430,7 +418,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
           <div className="card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <CheckCircle2 size={18} color="var(--color-success)" />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Current Profile Strengths</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Skills you already demonstrate</h3>
             </div>
 
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
@@ -463,13 +451,14 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.5rem' }}>
             <Layers size={20} color="var(--accent-primary)" />
             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.65rem' }}>
-              Sequential Learning Milestones
+              Your learning steps
             </h2>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {roadmap.milestones.map((milestone) => {
               const isChecked = completedMilestones.includes(milestone.id);
+              const relevantGap = roadmap.prioritizedGaps.find((gap) => milestone.skillsCovered.some((skill) => gap.skill.toLowerCase() === skill.toLowerCase()));
 
               return (
                 <div
@@ -522,7 +511,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                           color: isChecked ? 'var(--color-success)' : 'var(--text-secondary)'
                         }}
                       >
-                        {isChecked ? 'Milestone Completed' : 'Mark as Completed'}
+                        {isChecked ? 'Completed' : 'Mark as completed when you finish'}
                       </span>
                     </label>
 
@@ -572,9 +561,11 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                     >
                       {milestone.title}
                     </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '.3rem' }}>What you&apos;ll learn</p>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                       {milestone.objective}
                     </p>
+                    {relevantGap && <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}><strong>Why it matters:</strong> {relevantGap.rationale}</p>}
                   </div>
 
                   {/* Skills Covered Pills */}
@@ -602,7 +593,7 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
                       <BookOpen size={16} color="var(--accent-primary)" />
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Curated Free Learning Resources
+                        Free resources for this step
                       </span>
                     </div>
 
@@ -658,10 +649,10 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                     }}
                   >
                     {/* Practical Exercise */}
-                    <div style={{ padding: '0.85rem', backgroundColor: 'rgba(0, 0, 0, 0.15)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ padding: '0.85rem', backgroundColor: 'rgba(32, 37, 43, 0.035)', borderRadius: 'var(--radius-md)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.3rem' }}>
                         <Code2 size={14} color="var(--accent-primary)" />
-                        <span>Practical Exercise</span>
+                        <span>Try this task</span>
                       </div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
                         {milestone.practicalExercise}
@@ -669,10 +660,10 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
                     </div>
 
                     {/* Completion Criteria */}
-                    <div style={{ padding: '0.85rem', backgroundColor: 'rgba(0, 0, 0, 0.15)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ padding: '0.85rem', backgroundColor: 'rgba(32, 37, 43, 0.035)', borderRadius: 'var(--radius-md)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.3rem' }}>
                         <CheckSquare size={14} color="var(--color-success)" />
-                        <span>Completion Criteria</span>
+                        <span>You&apos;re finished when</span>
                       </div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
                         {milestone.completionCriteria}
@@ -792,3 +783,4 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
     </section>
   );
 };
+

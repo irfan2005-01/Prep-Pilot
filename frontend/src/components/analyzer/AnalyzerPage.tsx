@@ -13,11 +13,17 @@ import { analyzeResumeApi } from '../../services/resumeService';
 export interface AnalyzerPageProps {
   onViewBenchmarkReport: (role: TargetRole) => void;
   onAnalysisSuccess: (result: ResumeAnalysisResult) => void;
+  isAuthenticated: boolean;
+  authReady: boolean;
+  onRequireAuth: () => void;
 }
 
 export const AnalyzerPage: FC<AnalyzerPageProps> = ({
   onViewBenchmarkReport,
-  onAnalysisSuccess
+  onAnalysisSuccess,
+  isAuthenticated,
+  authReady,
+  onRequireAuth
 }) => {
   const [selectedRole, setSelectedRole] = useState<TargetRole>(DEFAULT_ROLE);
   const [uploadedFile, setUploadedFile] = useState<UploadedResumeFile | null>(null);
@@ -97,15 +103,23 @@ export const AnalyzerPage: FC<AnalyzerPageProps> = ({
               marginBottom: '0.75rem'
             }}
           >
-            Precision Resume Diagnostic
+            Know how ready your resume is.
           </h1>
 
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto' }}>
-            Select your target career track, upload your resume in PDF or DOCX format,
-            and inspect ATS structural compatibility, keyword coverage, and real Gemini AI feedback.
+            See what is working, what could improve, and what to learn next for your target role.
           </p>
         </div>
 
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '.75rem', marginBottom: '1.5rem' }} aria-label="How resume analysis works">
+          {[['1', 'Upload your resume'], ['2', 'Understand strengths and gaps'], ['3', 'Get a personalized learning plan']].map(([step, label]) => <div key={step} className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '.7rem' }}><span aria-hidden="true" style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{step}</span><span style={{ fontSize: '.88rem' }}>{label}</span></div>)}
+        </div>
+        {!isAuthenticated ? <div className="card" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); if (authReady) onRequireAuth(); }} style={{ padding: '2rem', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>{authReady ? 'PDF or DOCX · up to 5 MB. Sign in before choosing a file. Your resume will only be uploaded after you start analysis.' : 'Checking your sign-in…'}</p>
+          <button type="button" className="btn btn-primary btn-lg" onClick={onRequireAuth} disabled={!authReady}><Sparkles size={18} /><span>Analyze My Resume</span><ArrowRight size={18} /></button>
+          {authReady && <><p style={{ margin: '.85rem 0 0', color: 'var(--text-muted)', fontSize: '.82rem' }}>New to Prep Pilot? Choose “Create account” in the navigation.</p>
+          <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: '1rem' }} onClick={() => onViewBenchmarkReport(selectedRole)}>See a reference example</button></>}
+        </div> : <>
         {/* If in processing view */}
         {isProcessing && uploadedFile ? (
           <ProcessingState
@@ -213,7 +227,7 @@ export const AnalyzerPage: FC<AnalyzerPageProps> = ({
                 title={!uploadedFile ? 'Please select a valid PDF or DOCX file to enable analysis' : `Analyze ${uploadedFile.name} for ${selectedRole.title} using Gemini AI`}
               >
                 <Sparkles size={18} />
-                <span>Analyze Resume with Gemini AI</span>
+                <span>Analyze My Resume</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -229,6 +243,7 @@ export const AnalyzerPage: FC<AnalyzerPageProps> = ({
             <PrivacyNotice />
           </div>
         )}
+        </>}
       </div>
     </section>
   );

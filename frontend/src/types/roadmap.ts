@@ -47,6 +47,8 @@ export interface PersonalizedRoadmap {
   prioritizedGaps: SkillGap[];
   milestones: RoadmapMilestone[];
   capstoneProject: CapstoneProject;
+  persistenceId?: string;
+  milestoneCompletion?: Record<string, boolean>;
 }
 
 export interface RoadmapGenerationPayload {

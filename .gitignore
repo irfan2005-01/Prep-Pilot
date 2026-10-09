@@ -16,6 +16,7 @@ target/
 *.war
 *.ear
 .mvn/wrapper/maven-wrapper.jar
+.m2/
 
 # IDE & Editor files
 .idea/

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export const PrivacyNotice: FC = () => {
   return (
@@ -34,17 +34,11 @@ export const PrivacyNotice: FC = () => {
       <div style={{ flex: 1, fontSize: '0.82rem', lineHeight: 1.55 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
           <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>
-            Privacy & Non-Retention Commitment
+            How your resume is handled
           </strong>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-success)', fontSize: '0.74rem' }}>
-            <Lock size={12} /> Transient Only
-          </span>
         </div>
         <p style={{ color: 'var(--text-muted)' }}>
-          Prep Pilot adheres to strict data privacy principles. File validation is executed client-side.
-          Your resume is never stored in browser <code style={{ fontSize: '0.76rem' }}>localStorage</code>,
-          never sold to recruitment brokers, and never utilized for unconsented public model training.
-          In Phase 2, Spring Boot ingestion processes text in-memory with immediate post-analysis garbage collection.
+          Your resume is uploaded to Prep Pilot&apos;s backend for analysis. The analysis and related learning activity can be saved to your account so you can return to your progress.
         </p>
       </div>
     </div>

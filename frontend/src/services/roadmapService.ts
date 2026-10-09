@@ -1,7 +1,7 @@
 import type { PersonalizedRoadmap, RoadmapGenerationPayload } from '../types/roadmap';
-
-const API_BASE_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:8080';
+import { getAuthHeaders, extractAndSaveToken } from './dashboardService';
+import { getCsrfHeaders } from './authService';
+import { API_BASE_URL } from './apiConfig';
 
 export interface ApiErrorPayload {
   error: string;
@@ -19,15 +19,22 @@ export async function generateRoadmapApi(
   payload: RoadmapGenerationPayload,
   signal?: AbortSignal
 ): Promise<PersonalizedRoadmap> {
+  const authHeaders = getAuthHeaders();
+  const csrfHeaders = await getCsrfHeaders();
   const response = await fetch(`${API_BASE_URL}/api/v1/roadmaps/generate`, {
+    credentials: 'include',
     method: 'POST',
     headers: {
+      ...authHeaders,
+      ...csrfHeaders,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
     body: JSON.stringify(payload),
     signal
   });
+
+  extractAndSaveToken(response.headers);
 
   if (!response.ok) {
     let errorDetail = `Roadmap service error (HTTP ${response.status})`;
@@ -44,7 +51,9 @@ export async function generateRoadmapApi(
     throw new Error(errorDetail);
   }
 
-  return (await response.json()) as PersonalizedRoadmap;
+  const roadmap = await response.json() as PersonalizedRoadmap;
+  const persistenceId = response.headers.get('X-Roadmap-Id') || undefined;
+  return { ...roadmap, persistenceId };
 }
 
 /**
@@ -53,6 +62,7 @@ export async function generateRoadmapApi(
 export async function checkRoadmapHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/roadmaps/health`, {
+      credentials: 'include',
       method: 'GET',
       headers: { Accept: 'application/json' }
     });
@@ -61,4 +71,5 @@ export async function checkRoadmapHealth(): Promise<boolean> {
     return false;
   }
 }
+
 
