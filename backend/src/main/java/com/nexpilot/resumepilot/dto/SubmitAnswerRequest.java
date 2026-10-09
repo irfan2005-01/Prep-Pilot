@@ -11,3 +11,4 @@ public record SubmitAnswerRequest(
     @Size(min = 5, max = 10000, message = "Answer must be between 5 and 10,000 characters")
     String answerText
 ) {}
+

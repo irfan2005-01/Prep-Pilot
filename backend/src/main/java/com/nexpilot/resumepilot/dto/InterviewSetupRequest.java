@@ -25,3 +25,4 @@ public record InterviewSetupRequest(
     List<String> skillGaps,
     List<String> roadmapTopics
 ) {}
+

@@ -515,7 +515,7 @@ public class InterviewSimulatorService {
     }
 
     private String callGeminiApi(String prompt) {
-        String activeModel = (this.modelName != null && !this.modelName.isBlank()) ? this.modelName.trim() : "gemini-3.5-flash";
+        String activeModel = (this.modelName != null && !this.modelName.isBlank()) ? this.modelName.trim() : "gemini-3-flash-preview";
         String targetUrl = String.format(GEMINI_API_URL_TEMPLATE, activeModel, this.apiKey.trim());
 
         Map<String, Object> payload = Map.of(
@@ -550,25 +550,40 @@ public class InterviewSimulatorService {
                 throw new GeminiServiceException("No candidates returned from Gemini API", "NO_CANDIDATES", HttpStatus.BAD_GATEWAY);
             }
 
-            JsonNode textNode = candidates.get(0).path("content").path("parts").get(0).path("text");
-            if (textNode.isMissingNode()) {
-                throw new GeminiServiceException("No text part in Gemini API candidate", "INVALID_STRUCTURE", HttpStatus.BAD_GATEWAY);
+            JsonNode parts = candidates.get(0).path("content").path("parts");
+            if (parts.isArray() && !parts.isEmpty()) {
+                for (JsonNode part : parts) {
+                    if (part.has("text") && !part.path("text").asText().isBlank()) {
+                        return part.path("text").asText();
+                    }
+                }
             }
 
-            return textNode.asText();
+            throw new GeminiServiceException("No text part in Gemini API candidate", "INVALID_STRUCTURE", HttpStatus.BAD_GATEWAY);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
                 throw new GeminiServiceException("Gemini API rate limit exceeded. Please wait a moment and try again.", "RATE_LIMIT_EXCEEDED", HttpStatus.TOO_MANY_REQUESTS);
             }
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND && !"gemini-3.5-flash".equals(activeModel)) {
-                log.warn("Model {} returned 404, falling back to gemini-3.5-flash...", activeModel);
-                this.modelName = "gemini-3.5-flash";
+            if ((e.getStatusCode() == HttpStatus.NOT_FOUND || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE)
+                    && !"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Model {} returned {}, falling back to gemini-3.1-flash-lite-preview...", activeModel, e.getStatusCode());
+                this.modelName = "gemini-3.1-flash-lite-preview";
                 return callGeminiApi(prompt);
             }
             throw new GeminiServiceException("Gemini API client error: " + e.getMessage(), "GEMINI_CLIENT_ERROR", HttpStatus.valueOf(e.getStatusCode().value()));
         } catch (HttpServerErrorException e) {
+            if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE && !"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Model {} returned 503, falling back to gemini-3.1-flash-lite-preview...", activeModel);
+                this.modelName = "gemini-3.1-flash-lite-preview";
+                return callGeminiApi(prompt);
+            }
             throw new GeminiServiceException("Gemini API service temporarily unavailable: " + e.getMessage(), "GEMINI_SERVER_ERROR", HttpStatus.SERVICE_UNAVAILABLE);
         } catch (ResourceAccessException e) {
+            if (!"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Model {} timed out, falling back to gemini-3.1-flash-lite-preview...", activeModel);
+                this.modelName = "gemini-3.1-flash-lite-preview";
+                return callGeminiApi(prompt);
+            }
             throw new GeminiServiceException("Network timeout contacting Gemini API: " + e.getMessage(), "NETWORK_TIMEOUT", HttpStatus.GATEWAY_TIMEOUT);
         } catch (GeminiServiceException e) {
             throw e;

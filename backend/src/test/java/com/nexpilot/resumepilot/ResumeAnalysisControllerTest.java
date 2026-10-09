@@ -117,5 +117,13 @@ public class ResumeAnalysisControllerTest {
             .andExpect(jsonPath("$.code").value("INVALID_ROLE"))
             .andExpect(jsonPath("$.error").value("Invalid Target Role"));
     }
+
+    @Test
+    void testHealthEndpoint() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/resumes/health"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("UP"))
+            .andExpect(jsonPath("$.service").value("Prep Pilot Resume Analysis Engine"));
+    }
 }
 

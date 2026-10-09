@@ -58,5 +58,13 @@ public class ResumeAnalysisController {
 
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/health")
+    public ResponseEntity<java.util.Map<String, Object>> health() {
+        return ResponseEntity.ok(java.util.Map.of(
+            "status", "UP",
+            "service", "Prep Pilot Resume Analysis Engine"
+        ));
+    }
 }
 

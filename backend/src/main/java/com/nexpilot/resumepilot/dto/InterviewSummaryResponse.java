@@ -20,3 +20,4 @@ public record InterviewSummaryResponse(
     List<PerQuestionResultDto> questionResults,
     String practiceDisclaimer
 ) {}
+

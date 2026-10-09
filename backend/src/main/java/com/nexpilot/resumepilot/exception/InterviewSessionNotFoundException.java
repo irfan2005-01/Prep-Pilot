@@ -5,3 +5,4 @@ public class InterviewSessionNotFoundException extends RuntimeException {
         super("Interview session not found or has expired: " + sessionId);
     }
 }
+

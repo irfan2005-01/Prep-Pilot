@@ -5,3 +5,4 @@ public class InvalidInterviewStateException extends RuntimeException {
         super(message);
     }
 }
+

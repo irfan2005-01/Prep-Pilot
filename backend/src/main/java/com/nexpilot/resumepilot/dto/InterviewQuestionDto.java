@@ -9,3 +9,4 @@ public record InterviewQuestionDto(
     String questionText,
     String difficulty
 ) {}
+

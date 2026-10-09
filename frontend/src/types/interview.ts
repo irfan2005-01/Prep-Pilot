@@ -80,3 +80,4 @@ export interface InterviewSummary {
   questionResults: PerQuestionResult[];
   practiceDisclaimer: string;
 }
+

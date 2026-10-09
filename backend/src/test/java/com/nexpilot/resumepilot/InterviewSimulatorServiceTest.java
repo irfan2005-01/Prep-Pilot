@@ -197,3 +197,4 @@ class InterviewSimulatorServiceTest {
         assertFalse(summary.topStrengths().isEmpty());
     }
 }
+

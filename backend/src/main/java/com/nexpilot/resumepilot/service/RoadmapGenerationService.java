@@ -45,7 +45,7 @@ public class RoadmapGenerationService {
     @Value("${gemini.api.key:}")
     private String apiKey;
 
-    @Value("${gemini.model:gemini-3.5-flash}")
+    @Value("${gemini.model:gemini-3-flash-preview}")
     private String modelName;
 
     public RoadmapGenerationService(
@@ -94,7 +94,8 @@ public class RoadmapGenerationService {
     }
 
     private String callGeminiApi(String prompt) {
-        String endpointUrl = String.format(GEMINI_API_URL_TEMPLATE, modelName, apiKey);
+        String activeModel = (this.modelName != null && !this.modelName.isBlank()) ? this.modelName.trim() : "gemini-3-flash-preview";
+        String endpointUrl = String.format(GEMINI_API_URL_TEMPLATE, activeModel, apiKey);
 
         Map<String, Object> requestPayload = Map.of(
             "contents", List.of(
@@ -116,7 +117,8 @@ public class RoadmapGenerationService {
                 .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
                 .body(requestPayload)
                 .retrieve()
-                .body(byte[].class);
+                .toEntity(byte[].class)
+                .getBody();
 
             if (responseBytes == null || responseBytes.length == 0) {
                 throw new InvalidRoadmapResponseException("Empty response payload received from Gemini API.");
@@ -141,14 +143,25 @@ public class RoadmapGenerationService {
                     HttpStatus.UNAUTHORIZED
                 );
             }
-            log.error("Gemini API error HTTP {}: {}", e.getStatusCode(), e.getStatusText());
+            if ((e.getStatusCode() == HttpStatus.NOT_FOUND || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE)
+                    && !"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Gemini model {} returned {}, falling back to gemini-3.1-flash-lite-preview...", activeModel, e.getStatusCode());
+                this.modelName = "gemini-3.1-flash-lite-preview";
+                return callGeminiApi(prompt);
+            }
+            log.error("Gemini API error HTTP {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new GeminiServiceException(
-                "Gemini AI provider returned an error: " + e.getStatusCode(),
+                "Gemini AI provider returned an error: " + e.getStatusCode() + " - " + e.getStatusText(),
                 "AI_PROVIDER_ERROR",
                 HttpStatus.BAD_GATEWAY
             );
         } catch (HttpServerErrorException e) {
-            log.error("Gemini API error HTTP {}: {}", e.getStatusCode(), e.getStatusText());
+            if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE && !"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Gemini model {} returned 503, falling back to gemini-3.1-flash-lite-preview...", activeModel);
+                this.modelName = "gemini-3.1-flash-lite-preview";
+                return callGeminiApi(prompt);
+            }
+            log.error("Gemini API server error HTTP {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new GeminiServiceException(
                 "Gemini AI provider returned a server error: " + e.getStatusCode(),
                 "AI_PROVIDER_ERROR",
@@ -156,6 +169,11 @@ public class RoadmapGenerationService {
             );
         } catch (ResourceAccessException e) {
             log.error("Gemini API request timed out: {}", e.getMessage());
+            if (!"gemini-3.1-flash-lite-preview".equals(activeModel)) {
+                log.warn("Gemini model {} timed out, falling back to gemini-3.1-flash-lite-preview...", activeModel);
+                this.modelName = "gemini-3.1-flash-lite-preview";
+                return callGeminiApi(prompt);
+            }
             throw new GeminiServiceException(
                 "The roadmap generation service timed out waiting for the AI provider. Please try again.",
                 "AI_TIMEOUT",
@@ -164,9 +182,9 @@ public class RoadmapGenerationService {
         } catch (GeminiServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Unexpected error calling Gemini API for roadmap", e);
+            log.error("Unexpected error calling Gemini API for roadmap: {}", e.getMessage(), e);
             throw new GeminiServiceException(
-                "Failed to communicate with AI roadmap service.",
+                "Failed to communicate with AI roadmap service: " + e.getMessage(),
                 "AI_COMMUNICATION_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
@@ -180,7 +198,11 @@ public class RoadmapGenerationService {
             if (candidates.isArray() && !candidates.isEmpty()) {
                 JsonNode parts = candidates.get(0).path("content").path("parts");
                 if (parts.isArray() && !parts.isEmpty()) {
-                    return parts.get(0).path("text").asText();
+                    for (JsonNode part : parts) {
+                        if (part.has("text") && !part.path("text").asText().isBlank()) {
+                            return part.path("text").asText();
+                        }
+                    }
                 }
             }
             throw new InvalidRoadmapResponseException("Candidates array or text content missing from Gemini response.");
@@ -196,7 +218,17 @@ public class RoadmapGenerationService {
     ) {
         JsonNode root;
         try {
-            root = objectMapper.readTree(rawJson);
+            String cleanJson = rawJson != null ? rawJson.trim() : "";
+            if (cleanJson.startsWith("```json")) {
+                cleanJson = cleanJson.substring(7);
+            } else if (cleanJson.startsWith("```")) {
+                cleanJson = cleanJson.substring(3);
+            }
+            if (cleanJson.endsWith("```")) {
+                cleanJson = cleanJson.substring(0, cleanJson.length() - 3);
+            }
+            cleanJson = cleanJson.trim();
+            root = objectMapper.readTree(cleanJson);
         } catch (JsonProcessingException e) {
             throw new InvalidRoadmapResponseException("Model did not return valid JSON: " + e.getMessage());
         }

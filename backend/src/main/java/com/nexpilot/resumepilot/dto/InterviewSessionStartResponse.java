@@ -12,3 +12,4 @@ public record InterviewSessionStartResponse(
     InterviewQuestionDto currentQuestion,
     Instant createdAt
 ) {}
+

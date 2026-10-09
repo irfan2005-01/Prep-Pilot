@@ -7,3 +7,4 @@ public record SubmitAnswerResponse(
     InterviewQuestionDto nextQuestion,
     boolean isFinished
 ) {}
+

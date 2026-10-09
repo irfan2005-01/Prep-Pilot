@@ -175,3 +175,4 @@ public class InterviewControllerTest {
             .andExpect(jsonPath("$.activeSessions").value(3));
     }
 }
+

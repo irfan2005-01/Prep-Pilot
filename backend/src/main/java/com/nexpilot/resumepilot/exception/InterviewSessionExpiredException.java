@@ -5,3 +5,4 @@ public class InterviewSessionExpiredException extends RuntimeException {
         super("Interview session has expired due to inactivity: " + sessionId);
     }
 }
+
