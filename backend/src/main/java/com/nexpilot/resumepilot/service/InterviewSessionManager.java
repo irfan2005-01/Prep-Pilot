@@ -37,14 +37,36 @@ public class InterviewSessionManager {
         private final String roleTitle;
         private final String interviewType;
         private final String difficulty;
-        private final int totalQuestions;
+        private final int initialTotalQuestions;
         private final List<InterviewQuestionDto> questions;
         private final Map<String, SubmittedAnswerRecord> answers = new LinkedHashMap<>();
         private int currentQuestionIndex = 0;
         private final Instant createdAt;
         private Instant lastActivityAt;
         private boolean finished = false;
+        private final boolean enableFollowUps;
         private InterviewSummaryResponse cachedSummary;
+
+        public InterviewSession(
+            String sessionId,
+            String roleId,
+            String roleTitle,
+            String interviewType,
+            String difficulty,
+            List<InterviewQuestionDto> questions,
+            boolean enableFollowUps
+        ) {
+            this.sessionId = sessionId;
+            this.roleId = roleId;
+            this.roleTitle = roleTitle;
+            this.interviewType = interviewType;
+            this.difficulty = difficulty;
+            this.initialTotalQuestions = questions.size();
+            this.questions = Collections.synchronizedList(new ArrayList<>(questions));
+            this.enableFollowUps = enableFollowUps;
+            this.createdAt = Instant.now();
+            this.lastActivityAt = this.createdAt;
+        }
 
         public InterviewSession(
             String sessionId,
@@ -54,15 +76,7 @@ public class InterviewSessionManager {
             String difficulty,
             List<InterviewQuestionDto> questions
         ) {
-            this.sessionId = sessionId;
-            this.roleId = roleId;
-            this.roleTitle = roleTitle;
-            this.interviewType = interviewType;
-            this.difficulty = difficulty;
-            this.totalQuestions = questions.size();
-            this.questions = Collections.unmodifiableList(new ArrayList<>(questions));
-            this.createdAt = Instant.now();
-            this.lastActivityAt = this.createdAt;
+            this(sessionId, roleId, roleTitle, interviewType, difficulty, questions, true);
         }
 
         public String getSessionId() { return sessionId; }
@@ -70,8 +84,14 @@ public class InterviewSessionManager {
         public String getRoleTitle() { return roleTitle; }
         public String getInterviewType() { return interviewType; }
         public String getDifficulty() { return difficulty; }
-        public int getTotalQuestions() { return totalQuestions; }
-        public List<InterviewQuestionDto> getQuestions() { return questions; }
+        public int getTotalQuestions() { return questions.size(); }
+        public int getInitialTotalQuestions() { return initialTotalQuestions; }
+        public boolean isEnableFollowUps() { return enableFollowUps; }
+        public List<InterviewQuestionDto> getQuestions() {
+            synchronized (questions) {
+                return Collections.unmodifiableList(new ArrayList<>(questions));
+            }
+        }
         public Map<String, SubmittedAnswerRecord> getAnswers() { return Collections.unmodifiableMap(answers); }
         public int getCurrentQuestionIndex() { return currentQuestionIndex; }
         public Instant getCreatedAt() { return createdAt; }
@@ -79,11 +99,33 @@ public class InterviewSessionManager {
         public boolean isFinished() { return finished; }
         public InterviewSummaryResponse getCachedSummary() { return cachedSummary; }
 
-        public InterviewQuestionDto getCurrentQuestion() {
+        public synchronized InterviewQuestionDto getCurrentQuestion() {
             if (currentQuestionIndex < questions.size()) {
                 return questions.get(currentQuestionIndex);
             }
             return null;
+        }
+
+        public synchronized boolean canInsertFollowUp(String parentQuestionId) {
+            if (!enableFollowUps || parentQuestionId == null) return false;
+            synchronized (questions) {
+                long count = questions.stream()
+                    .filter(q -> Boolean.TRUE.equals(q.isFollowUp()) && parentQuestionId.equals(q.parentQuestionId()))
+                    .count();
+                return count == 0;
+            }
+        }
+
+        public synchronized void insertFollowUpQuestion(InterviewQuestionDto followUp) {
+            if (followUp == null) return;
+            synchronized (questions) {
+                // Insert at currentQuestionIndex so it becomes the next active question
+                questions.add(currentQuestionIndex, followUp);
+            }
+            finished = false;
+            lastActivityAt = Instant.now();
+            log.info("Inserted contextual follow-up question [{}] into session [{}]. Total questions now: {}",
+                followUp.id(), sessionId, questions.size());
         }
 
         public synchronized void recordAnswer(String questionId, String answerText, AnswerEvaluationDto feedback) {
@@ -107,7 +149,7 @@ public class InterviewSessionManager {
             currentQuestionIndex++;
             lastActivityAt = Instant.now();
 
-            if (currentQuestionIndex >= totalQuestions) {
+            if (currentQuestionIndex >= questions.size()) {
                 finished = true;
             }
         }
@@ -130,7 +172,8 @@ public class InterviewSessionManager {
         String roleTitle,
         String interviewType,
         String difficulty,
-        List<InterviewQuestionDto> questions
+        List<InterviewQuestionDto> questions,
+        boolean enableFollowUps
     ) {
         enforceCapacityLimit();
         String sessionId = UUID.randomUUID().toString();
@@ -140,12 +183,23 @@ public class InterviewSessionManager {
             roleTitle,
             interviewType,
             difficulty,
-            questions
+            questions,
+            enableFollowUps
         );
         sessions.put(sessionId, session);
-        log.info("Created new interview session: id={}, role={}, type={}, questions={}",
-            sessionId, roleId, interviewType, questions.size());
+        log.info("Created new interview session: id={}, role={}, type={}, questions={}, followUps={}",
+            sessionId, roleId, interviewType, questions.size(), enableFollowUps);
         return session;
+    }
+
+    public InterviewSession createSession(
+        String roleId,
+        String roleTitle,
+        String interviewType,
+        String difficulty,
+        List<InterviewQuestionDto> questions
+    ) {
+        return createSession(roleId, roleTitle, interviewType, difficulty, questions, true);
     }
 
     public InterviewSession getSession(String sessionId) {
@@ -215,4 +269,3 @@ public class InterviewSessionManager {
         }
     }
 }
-

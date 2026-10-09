@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { InterviewQuestion } from '../../types/interview';
-import { Send, LogOut, Sparkles, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, LogOut, Sparkles, MessageSquare, AlertCircle, Loader2, Mic } from 'lucide-react';
 
 interface QuestionViewProps {
   question: InterviewQuestion;
@@ -10,6 +10,7 @@ interface QuestionViewProps {
   isSubmitting: boolean;
   onSubmitAnswer: (answerText: string) => void;
   onRequestExit: () => void;
+  onSwitchToVoiceMode?: () => void;
 }
 
 export const QuestionView: React.FC<QuestionViewProps> = ({
@@ -20,6 +21,7 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
   isSubmitting,
   onSubmitAnswer,
   onRequestExit,
+  onSwitchToVoiceMode,
 }) => {
   const [answerText, setAnswerText] = useState('');
   const [clientError, setClientError] = useState<string | null>(null);
@@ -60,42 +62,75 @@ export const QuestionView: React.FC<QuestionViewProps> = ({
           borderBottom: '1px solid var(--border-subtle)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <span
             className="badge badge-orange"
             style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.72rem' }}
           >
             {roleTitle}
           </span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Question {currentNumber} of {totalQuestions}
-          </span>
+          {question.isFollowUp ? (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                padding: '0.2rem 0.55rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'rgba(232, 90, 11, 0.12)',
+                color: 'var(--accent-primary)',
+                border: '1px solid var(--accent-border)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Contextual Follow-Up
+            </span>
+          ) : (
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              Question {currentNumber} of {totalQuestions}
+            </span>
+          )}
         </div>
 
-        <button
-          type="button"
-          onClick={onRequestExit}
-          className="btn btn-ghost btn-sm"
-          style={{
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.35rem 0.65rem'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#f87171';
-            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--text-muted)';
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <LogOut size={14} />
-          <span>Exit Interview</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          {onSwitchToVoiceMode && (
+            <button
+              type="button"
+              onClick={onSwitchToVoiceMode}
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <Mic size={14} color="var(--accent-primary)" />
+              <span>Switch to Voice Mode</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onRequestExit}
+            className="btn btn-ghost btn-sm"
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.35rem 0.65rem'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#f87171';
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <LogOut size={14} />
+            <span>Exit</span>
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}

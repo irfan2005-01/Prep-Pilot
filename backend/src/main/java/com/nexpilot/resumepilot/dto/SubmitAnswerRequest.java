@@ -7,8 +7,13 @@ public record SubmitAnswerRequest(
     @NotBlank(message = "Question ID is required")
     String questionId,
 
-    @NotBlank(message = "Answer text cannot be blank")
-    @Size(min = 5, max = 10000, message = "Answer must be between 5 and 10,000 characters")
-    String answerText
-) {}
+    @NotBlank(message = "Answer text is required")
+    @Size(min = 10, max = 5000, message = "Answer must be between 10 and 5000 characters")
+    String answerText,
 
+    Boolean allowFollowUp
+) {
+    public SubmitAnswerRequest(String questionId, String answerText) {
+        this(questionId, answerText, true);
+    }
+}

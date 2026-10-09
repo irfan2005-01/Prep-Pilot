@@ -62,6 +62,7 @@ public class InterviewSimulatorService {
         String interviewType = normalizeInterviewType(request.interviewType());
         String difficulty = normalizeDifficulty(request.difficulty());
         int questionCount = request.questionCount() != null ? Math.clamp(request.questionCount(), 3, 10) : 5;
+        boolean enableFollowUps = request.enableFollowUps() == null || Boolean.TRUE.equals(request.enableFollowUps());
 
         List<InterviewQuestionDto> questions = generateQuestionsWithGemini(request, role, interviewType, difficulty, questionCount);
 
@@ -70,7 +71,8 @@ public class InterviewSimulatorService {
             role.title(),
             interviewType,
             difficulty,
-            questions
+            questions,
+            enableFollowUps
         );
 
         return new InterviewSessionStartResponse(
@@ -104,15 +106,38 @@ public class InterviewSimulatorService {
         }
 
         RoleRegistry.RoleMetadata role = roleRegistry.getRole(session.getRoleId());
+        boolean allowFollowUp = request.allowFollowUp() == null || Boolean.TRUE.equals(request.allowFollowUp());
+        boolean canHaveFollowUp = session.isEnableFollowUps()
+            && allowFollowUp
+            && !Boolean.TRUE.equals(currentQuestion.isFollowUp())
+            && session.canInsertFollowUp(currentQuestion.id());
+
         AnswerEvaluationDto feedback = evaluateAnswerWithGemini(
             currentQuestion,
             request.answerText().trim(),
             role,
-            session.getDifficulty()
+            session.getDifficulty(),
+            canHaveFollowUp
         );
 
         // Record answer and advance session state
         session.recordAnswer(request.questionId(), request.answerText().trim(), feedback);
+
+        // Insert contextual follow-up question if generated
+        if (canHaveFollowUp && feedback.followUpQuestion() != null && !feedback.followUpQuestion().isBlank()) {
+            InterviewQuestionDto followUpQuestion = new InterviewQuestionDto(
+                currentQuestion.id() + "-f",
+                currentQuestion.questionNumber(),
+                session.getTotalQuestions() + 1,
+                currentQuestion.category(),
+                currentQuestion.competency() + " (Follow-up)",
+                feedback.followUpQuestion().trim(),
+                currentQuestion.difficulty(),
+                true,
+                currentQuestion.id()
+            );
+            session.insertFollowUpQuestion(followUpQuestion);
+        }
 
         boolean isFinished = session.isFinished();
         InterviewQuestionDto nextQuestion = session.getCurrentQuestion();
@@ -289,14 +314,15 @@ public class InterviewSimulatorService {
         InterviewQuestionDto question,
         String answerText,
         RoleRegistry.RoleMetadata role,
-        String difficulty
+        String difficulty,
+        boolean canHaveFollowUp
     ) {
         ensureApiKeyConfigured();
 
         boolean isBehavioral = "behavioral".equalsIgnoreCase(question.category()) ||
                                "situational".equalsIgnoreCase(question.category());
 
-        String prompt = buildAnswerEvaluationPrompt(question, answerText, role, difficulty, isBehavioral);
+        String prompt = buildAnswerEvaluationPrompt(question, answerText, role, difficulty, isBehavioral, canHaveFollowUp);
 
         for (int attempt = 1; attempt <= 2; attempt++) {
             try {
@@ -393,7 +419,8 @@ public class InterviewSimulatorService {
         String answerText,
         RoleRegistry.RoleMetadata role,
         String difficulty,
-        boolean isBehavioral
+        boolean isBehavioral,
+        boolean canHaveFollowUp
     ) {
         StringBuilder sb = new StringBuilder();
         sb.append("You are an expert technical interviewer evaluating a candidate's practice interview response.\n");
@@ -423,6 +450,14 @@ public class InterviewSimulatorService {
             sb.append("- Score 0-100 reflecting correctness, depth, handling of edge cases, and industry best practices.\n");
         }
 
+        if (canHaveFollowUp) {
+            sb.append("\n- Follow-Up Question Guidance:\n");
+            sb.append("  * Propose a single, conversational follow-up question (1-2 sentences) directly challenging an omission, architectural trade-off, edge case, or situational choice in what they just said.\n");
+            sb.append("  * If their response was already exceptionally comprehensive, or completely irrelevant, set followUpQuestion to null.\n");
+        } else {
+            sb.append("\n- Set followUpQuestion to null.\n");
+        }
+
         sb.append("\nReturn ONLY valid JSON matching this schema:\n");
         sb.append("{\n");
         sb.append("  \"score\": 75,\n");
@@ -431,7 +466,9 @@ public class InterviewSimulatorService {
         sb.append("  \"missingConcepts\": [\"1-2 key concepts, technical terms, or STAR components that would have elevated the answer\"],\n");
         sb.append("  \"suggestedAnswer\": \"A concise model of a stronger answer or suggested answer structure (2-4 sentences)\",\n");
         sb.append("  \"nextStep\": \"One practical immediate practice tip (1 sentence)\",\n");
-        sb.append("  \"rubricType\": \"").append(isBehavioral ? "star-behavioral" : "technical").append("\"\n");
+        sb.append("  \"rubricType\": \"").append(isBehavioral ? "star-behavioral" : "technical").append("\",\n");
+        sb.append("  \"followUpQuestion\": \"A targeted follow-up question directly related to their answer, or null\",\n");
+        sb.append("  \"spokenSummary\": \"A warm, conversational 1-2 sentence spoken summary for voice text-to-speech praising key points and stating the score (e.g. 'You scored 78. Your explanation of reactive state was clear, though you should also address type safety.')\"\n");
         sb.append("}\n");
 
         return sb.toString();
@@ -490,6 +527,22 @@ public class InterviewSimulatorService {
             String nextStep = root.has("nextStep") ? root.get("nextStep").asText("") : "";
             String rubricType = root.has("rubricType") ? root.get("rubricType").asText(isBehavioral ? "star-behavioral" : "technical") : (isBehavioral ? "star-behavioral" : "technical");
 
+            String followUpQuestion = root.has("followUpQuestion") && !root.get("followUpQuestion").isNull()
+                ? root.get("followUpQuestion").asText("").trim()
+                : null;
+            if (followUpQuestion != null && (followUpQuestion.equalsIgnoreCase("null") || followUpQuestion.isBlank())) {
+                followUpQuestion = null;
+            }
+
+            String spokenSummary = root.has("spokenSummary") && !root.get("spokenSummary").isNull()
+                ? root.get("spokenSummary").asText("").trim()
+                : null;
+            if (spokenSummary == null || spokenSummary.isBlank() || spokenSummary.equalsIgnoreCase("null")) {
+                spokenSummary = String.format("You scored %d on this response. %s",
+                    score,
+                    !strengths.isEmpty() ? strengths.get(0) : "Good effort on your answer.");
+            }
+
             if (strengths.isEmpty()) {
                 strengths.add("Clear communication style");
             }
@@ -506,7 +559,9 @@ public class InterviewSimulatorService {
                 suggestedAnswer,
                 nextStep,
                 rubricType,
-                "Practice evaluation only — not predictive of employment outcomes."
+                "Practice evaluation only — not predictive of employment outcomes.",
+                followUpQuestion,
+                spokenSummary
             );
         } catch (Exception e) {
             log.warn("Error parsing evaluation JSON: {}", e.getMessage());

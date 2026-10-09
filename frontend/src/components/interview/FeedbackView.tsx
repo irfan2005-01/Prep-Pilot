@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { AnswerEvaluation, InterviewQuestion } from '../../types/interview';
 import {
   CheckCircle2,
@@ -9,8 +9,11 @@ import {
   Award,
   Sparkles,
   Info,
-  Loader2
+  Loader2,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
+import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
 
 interface FeedbackViewProps {
   feedback: AnswerEvaluation;
@@ -19,6 +22,8 @@ interface FeedbackViewProps {
   nextQuestionNumber: number;
   onAdvance: () => void;
   isLoadingNext: boolean;
+  isVoiceMode?: boolean;
+  isNextFollowUp?: boolean;
 }
 
 export const FeedbackView: React.FC<FeedbackViewProps> = ({
@@ -28,7 +33,33 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({
   nextQuestionNumber,
   onAdvance,
   isLoadingNext,
+  isVoiceMode = false,
+  isNextFollowUp = false,
 }) => {
+  const { isSpeaking, speak, cancel: stopSpeaking } = useSpeechSynthesis();
+  const hasSpokenFeedbackRef = useRef(false);
+
+  const spokenText = feedback.spokenSummary ||
+    `You scored ${feedback.score} on this response. ${feedback.strengths[0] || 'Good effort.'} Review your full diagnostic scorecard on screen.`;
+
+  // Auto-speak concise summary in voice mode
+  useEffect(() => {
+    if (isVoiceMode && !hasSpokenFeedbackRef.current) {
+      hasSpokenFeedbackRef.current = true;
+      const timer = setTimeout(() => {
+        speak(spokenText);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isVoiceMode, spokenText, speak]);
+
+  const toggleSpokenFeedback = () => {
+    if (isSpeaking) {
+      stopSpeaking();
+    } else {
+      speak(spokenText);
+    }
+  };
   const getScoreStyle = (score: number) => {
     if (score >= 80) {
       return {
@@ -107,34 +138,56 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({
             </h2>
           </div>
 
-          <div
-            style={{
-              padding: '0.75rem 1.25rem',
-              borderRadius: 'var(--radius-lg)',
-              border: `1px solid ${scoreStyle.borderColor}`,
-              backgroundColor: scoreStyle.backgroundColor,
-              color: scoreStyle.color,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
-          >
-            <Award size={26} strokeWidth={2.2} />
-            <div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                {feedback.score}
-              </div>
-              <div
-                style={{
-                  fontSize: '0.65rem',
-                  fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  opacity: 0.85,
-                  marginTop: '0.2rem'
-                }}
-              >
-                / 100 PTS
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={toggleSpokenFeedback}
+              className="btn btn-outline btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+              title={isSpeaking ? 'Stop Spoken Feedback' : 'Hear Alex Spoken Summary'}
+            >
+              {isSpeaking ? (
+                <>
+                  <VolumeX size={15} color="#f87171" />
+                  <span>Stop Audio</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 size={15} color="var(--accent-primary)" />
+                  <span>Spoken Assessment</span>
+                </>
+              )}
+            </button>
+
+            <div
+              style={{
+                padding: '0.75rem 1.25rem',
+                borderRadius: 'var(--radius-lg)',
+                border: `1px solid ${scoreStyle.borderColor}`,
+                backgroundColor: scoreStyle.backgroundColor,
+                color: scoreStyle.color,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <Award size={26} strokeWidth={2.2} />
+              <div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                  {feedback.score}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.65rem',
+                    fontFamily: 'var(--font-mono)',
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    opacity: 0.85,
+                    marginTop: '0.2rem'
+                  }}
+                >
+                  / 100 PTS
+                </div>
               </div>
             </div>
           </div>
@@ -428,7 +481,9 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({
               <>
                 <span>
                   {hasNextQuestion
-                    ? `Proceed to Question ${nextQuestionNumber}`
+                    ? isNextFollowUp
+                      ? 'Proceed to Follow-Up Question'
+                      : `Proceed to Question ${nextQuestionNumber}`
                     : 'Complete & View Scorecard'}
                 </span>
                 <ArrowRight size={16} />

@@ -3,6 +3,7 @@ import type { FreeResource } from './roadmap';
 export type InterviewType = 'technical' | 'behavioral' | 'mixed';
 export type InterviewDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type InterviewCategory = 'technical' | 'behavioral' | 'situational' | 'system-design';
+export type InterviewMode = 'voice' | 'text';
 
 export interface InterviewSetupConfig {
   roleId: string;
@@ -12,6 +13,8 @@ export interface InterviewSetupConfig {
   strengths?: string[];
   skillGaps?: string[];
   roadmapTopics?: string[];
+  enableFollowUps?: boolean;
+  mode?: InterviewMode;
 }
 
 export interface InterviewQuestion {
@@ -22,6 +25,8 @@ export interface InterviewQuestion {
   competency: string;
   questionText: string;
   difficulty: string;
+  isFollowUp?: boolean;
+  parentQuestionId?: string;
 }
 
 export interface AnswerEvaluation {
@@ -34,6 +39,8 @@ export interface AnswerEvaluation {
   nextStep: string;
   rubricType: 'star-behavioral' | 'technical';
   practiceDisclaimer: string;
+  followUpQuestion?: string | null;
+  spokenSummary?: string | null;
 }
 
 export interface InterviewSessionStartResponse {
@@ -80,4 +87,3 @@ export interface InterviewSummary {
   questionResults: PerQuestionResult[];
   practiceDisclaimer: string;
 }
-

@@ -66,6 +66,7 @@ export async function submitAnswerApi(
   sessionId: string,
   questionId: string,
   answerText: string,
+  allowFollowUp: boolean = true,
   signal?: AbortSignal
 ): Promise<SubmitAnswerResponse> {
   const url = `${API_BASE_URL}/api/v1/interviews/${encodeURIComponent(sessionId)}/answer`;
@@ -79,6 +80,7 @@ export async function submitAnswerApi(
       body: JSON.stringify({
         questionId,
         answerText,
+        allowFollowUp,
       }),
       signal,
     });

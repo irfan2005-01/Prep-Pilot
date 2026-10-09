@@ -115,6 +115,76 @@ class InterviewSessionManagerTest {
     }
 
     @Test
+    @DisplayName("Should dynamically insert contextual follow-up question and progress properly")
+    void testFollowUpQuestionInsertion() {
+        List<InterviewQuestionDto> questions = createSampleQuestions();
+        InterviewSession session = sessionManager.createSession(
+            "java-developer",
+            "Java Developer",
+            "mixed",
+            "intermediate",
+            questions,
+            true
+        );
+
+        assertTrue(session.canInsertFollowUp("q-1"));
+
+        // Submit answer for q-1
+        session.recordAnswer("q-1", "Polymorphism is method overloading and overriding.", createSampleEvaluation("q-1", 75));
+
+        // Insert follow-up question for q-1
+        InterviewQuestionDto followUp = new InterviewQuestionDto(
+            "q-1-f",
+            1,
+            3,
+            "technical",
+            "Java Basics (Follow-up)",
+            "How does dynamic method dispatch implement overriding in the JVM?",
+            "intermediate",
+            true,
+            "q-1"
+        );
+        session.insertFollowUpQuestion(followUp);
+
+        // Verify total questions increased and current question is the follow-up
+        assertEquals(3, session.getTotalQuestions());
+        assertFalse(session.isFinished());
+        assertNotNull(session.getCurrentQuestion());
+        assertEquals("q-1-f", session.getCurrentQuestion().id());
+        assertTrue(session.getCurrentQuestion().isFollowUp());
+
+        // Cannot insert another follow-up for q-1
+        assertFalse(session.canInsertFollowUp("q-1"));
+
+        // Answer follow-up question
+        session.recordAnswer("q-1-f", "The JVM uses invokevirtual and vtables.", createSampleEvaluation("q-1-f", 88));
+        assertEquals("q-2", session.getCurrentQuestion().id());
+        assertFalse(session.isFinished());
+
+        // Answer q-2
+        session.recordAnswer("q-2", "We resolved the team debate using data benchmarks.", createSampleEvaluation("q-2", 92));
+        assertTrue(session.isFinished());
+        assertNull(session.getCurrentQuestion());
+        assertEquals(3, session.getAnswers().size());
+    }
+
+    @Test
+    @DisplayName("Should respect enableFollowUps false flag")
+    void testDisabledFollowUps() {
+        List<InterviewQuestionDto> questions = createSampleQuestions();
+        InterviewSession session = sessionManager.createSession(
+            "java-developer",
+            "Java Developer",
+            "mixed",
+            "intermediate",
+            questions,
+            false
+        );
+
+        assertFalse(session.canInsertFollowUp("q-1"));
+    }
+
+    @Test
     @DisplayName("Should throw InterviewSessionNotFoundException for unknown session ID")
     void testSessionNotFound() {
         assertThrows(InterviewSessionNotFoundException.class, () ->

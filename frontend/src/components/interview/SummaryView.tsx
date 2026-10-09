@@ -651,14 +651,14 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
                     <span
                       style={{
-                        width: '28px',
+                        padding: '0 0.5rem',
                         height: '28px',
                         borderRadius: 'var(--radius-sm)',
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-default)',
-                        color: 'var(--text-secondary)',
+                        backgroundColor: result.question.isFollowUp ? 'rgba(232, 90, 11, 0.12)' : 'var(--bg-card)',
+                        border: result.question.isFollowUp ? '1px solid var(--accent-border)' : '1px solid var(--border-default)',
+                        color: result.question.isFollowUp ? 'var(--accent-primary)' : 'var(--text-secondary)',
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         fontWeight: 700,
                         display: 'flex',
                         alignItems: 'center',
@@ -666,7 +666,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                         flexShrink: 0
                       }}
                     >
-                      Q{result.question.questionNumber}
+                      {result.question.isFollowUp ? `Q${result.question.questionNumber} Follow-up` : `Q${result.question.questionNumber}`}
                     </span>
                     <div style={{ minWidth: 0 }}>
                       <div
@@ -690,6 +690,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                           marginTop: '0.15rem'
                         }}
                       >
+                        {result.question.isFollowUp && <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>FOLLOW-UP • </span>}
                         {result.question.category} • {result.question.competency}
                       </div>
                     </div>

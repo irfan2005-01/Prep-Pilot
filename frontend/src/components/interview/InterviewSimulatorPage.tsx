@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type {
   AnswerEvaluation,
+  InterviewMode,
   InterviewQuestion,
   InterviewSessionStartResponse,
   InterviewSetupConfig,
@@ -15,6 +16,7 @@ import {
 import { BENCHMARK_INTERVIEWS } from '../../data/benchmarkInterviews';
 import { SetupView } from './SetupView';
 import { QuestionView } from './QuestionView';
+import { VoiceQuestionView } from './VoiceQuestionView';
 import { FeedbackView } from './FeedbackView';
 import { SummaryView } from './SummaryView';
 import { ExitConfirmModal } from './ExitConfirmModal';
@@ -38,6 +40,7 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
   onNavigateToAnalyzer,
 }) => {
   const [phase, setPhase] = useState<SimulatorPhase>('setup');
+  const [interviewMode, setInterviewMode] = useState<InterviewMode>('voice');
   const [session, setSession] = useState<InterviewSessionStartResponse | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
   const [nextPendingQuestion, setNextPendingQuestion] = useState<InterviewQuestion | null>(null);
@@ -55,6 +58,9 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
   const handleStart = async (config: InterviewSetupConfig) => {
     setIsStarting(true);
     setErrorMessage(null);
+    if (config.mode) {
+      setInterviewMode(config.mode);
+    }
 
     try {
       const startRes = await startInterviewApi(config);
@@ -205,15 +211,29 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
       )}
 
       {phase === 'active' && currentQuestion && session && (
-        <QuestionView
-          question={currentQuestion}
-          totalQuestions={session.totalQuestions}
-          currentNumber={currentQuestion.questionNumber}
-          roleTitle={session.roleTitle}
-          isSubmitting={isSubmitting}
-          onSubmitAnswer={handleSubmitAnswer}
-          onRequestExit={() => setIsExitModalOpen(true)}
-        />
+        interviewMode === 'voice' ? (
+          <VoiceQuestionView
+            question={currentQuestion}
+            totalQuestions={session.totalQuestions}
+            currentNumber={currentQuestion.questionNumber}
+            roleTitle={session.roleTitle}
+            isSubmitting={isSubmitting}
+            onSubmitAnswer={handleSubmitAnswer}
+            onRequestExit={() => setIsExitModalOpen(true)}
+            onSwitchToTextMode={() => setInterviewMode('text')}
+          />
+        ) : (
+          <QuestionView
+            question={currentQuestion}
+            totalQuestions={session.totalQuestions}
+            currentNumber={currentQuestion.questionNumber}
+            roleTitle={session.roleTitle}
+            isSubmitting={isSubmitting}
+            onSubmitAnswer={handleSubmitAnswer}
+            onRequestExit={() => setIsExitModalOpen(true)}
+            onSwitchToVoiceMode={() => setInterviewMode('voice')}
+          />
+        )
       )}
 
       {phase === 'feedback' && latestFeedback && currentQuestion && session && (
@@ -224,6 +244,8 @@ export const InterviewSimulatorPage: React.FC<InterviewSimulatorPageProps> = ({
           nextQuestionNumber={nextPendingQuestion ? nextPendingQuestion.questionNumber : currentQuestion.questionNumber + 1}
           onAdvance={handleAdvance}
           isLoadingNext={isLoadingNext}
+          isVoiceMode={interviewMode === 'voice'}
+          isNextFollowUp={Boolean(nextPendingQuestion?.isFollowUp)}
         />
       )}
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TARGET_ROLES } from '../../data/roles';
-import type { InterviewDifficulty, InterviewSetupConfig, InterviewType } from '../../types/interview';
-import { Sparkles, Brain, Compass, Layers, Check, ArrowRight, BookOpen, Loader2 } from 'lucide-react';
+import type { InterviewDifficulty, InterviewSetupConfig, InterviewType, InterviewMode } from '../../types/interview';
+import { Sparkles, Brain, Compass, Layers, Check, ArrowRight, BookOpen, Loader2, Mic, Type } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface SetupViewProps {
@@ -25,6 +25,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [interviewType, setInterviewType] = useState<InterviewType>('mixed');
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>('intermediate');
   const [questionCount, setQuestionCount] = useState<number>(5);
+  const [mode, setMode] = useState<InterviewMode>('voice');
+  const [enableFollowUps, setEnableFollowUps] = useState<boolean>(true);
 
   const selectedRole = TARGET_ROLES.find((r) => r.id === roleId) || TARGET_ROLES[0];
   const hasContext = contextStrengths.length > 0 || contextSkillGaps.length > 0;
@@ -36,6 +38,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       interviewType,
       difficulty,
       questionCount,
+      enableFollowUps,
+      mode,
       strengths: contextStrengths.length > 0 ? contextStrengths : undefined,
       skillGaps: contextSkillGaps.length > 0 ? contextSkillGaps : undefined,
     });
@@ -353,6 +357,137 @@ export const SetupView: React.FC<SetupViewProps> = ({
               );
             })}
           </div>
+        </div>
+
+        <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '2rem 0' }} />
+
+        {/* Section 2.5: Interactive Mode Selection (Voice AI vs Written Text) */}
+        <div style={{ marginBottom: '2rem' }}>
+          <label
+            style={{
+              fontSize: '0.98rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.85rem'
+            }}
+          >
+            <Mic size={18} color="var(--accent-primary)" />
+            <span>Interactive Interview Format</span>
+          </label>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '0.75rem',
+              marginBottom: '0.85rem'
+            }}
+          >
+            {[
+              {
+                id: 'voice',
+                title: 'Voice AI Interview (Recommended)',
+                description: 'Real-time microphone input, live speech transcription, and spoken questions from AI interviewer Alex.',
+                icon: <Mic size={18} color="var(--accent-primary)" />,
+              },
+              {
+                id: 'text',
+                title: 'Text-Based Written Mode',
+                description: 'Type your responses in an editorial textarea with character counting and keyboard shortcuts.',
+                icon: <Type size={18} color="var(--text-muted)" />,
+              },
+            ].map((m) => {
+              const isSelected = mode === m.id;
+              return (
+                <button
+                  type="button"
+                  key={m.id}
+                  onClick={() => setMode(m.id as InterviewMode)}
+                  style={{
+                    padding: '1.15rem 1.25rem',
+                    backgroundColor: isSelected ? 'var(--accent-subtle)' : 'var(--bg-subtle)',
+                    border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.45rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {m.icon}
+                      <span
+                        style={{
+                          fontSize: '0.92rem',
+                          fontWeight: isSelected ? 600 : 500,
+                          color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)'
+                        }}
+                      >
+                        {m.title}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--accent-primary)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+                    {m.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Follow-up question toggle option */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              cursor: 'pointer',
+              padding: '0.65rem 0.85rem',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.82rem',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={enableFollowUps}
+              onChange={(e) => setEnableFollowUps(e.target.checked)}
+              style={{
+                accentColor: 'var(--accent-primary)',
+                cursor: 'pointer',
+                width: '16px',
+                height: '16px'
+              }}
+            />
+            <span>
+              <strong style={{ color: 'var(--text-primary)' }}>Enable Adaptive Follow-Up Questions:</strong> Gemini will ask targeted follow-ups probing specific trade-offs or omissions in your answer.
+            </span>
+          </label>
         </div>
 
         <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '2rem 0' }} />

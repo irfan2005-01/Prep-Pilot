@@ -23,6 +23,18 @@ public record InterviewSetupRequest(
 
     List<String> strengths,
     List<String> skillGaps,
-    List<String> roadmapTopics
-) {}
-
+    List<String> roadmapTopics,
+    Boolean enableFollowUps
+) {
+    public InterviewSetupRequest(
+        String roleId,
+        String interviewType,
+        String difficulty,
+        Integer questionCount,
+        List<String> strengths,
+        List<String> skillGaps,
+        List<String> roadmapTopics
+    ) {
+        this(roleId, interviewType, difficulty, questionCount, strengths, skillGaps, roadmapTopics, true);
+    }
+}
