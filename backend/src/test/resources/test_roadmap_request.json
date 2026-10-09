@@ -1,0 +1,9 @@
+{
+  "roleId": "data-analyst",
+  "roleTitle": "Data Analyst",
+  "strengths": ["Python", "SQL"],
+  "missingKeywords": ["Tableau", "PowerBI", "Excel", "ETL"],
+  "matchedKeywords": ["Python", "SQL", "Pandas"],
+  "currentScore": 51
+}
+
