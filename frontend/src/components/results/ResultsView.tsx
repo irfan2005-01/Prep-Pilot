@@ -9,18 +9,20 @@ import { KeywordAnalysisCard } from './KeywordAnalysisCard';
 import { SectionBreakdownCard } from './SectionBreakdownCard';
 import { BulletTransformCard } from './BulletTransformCard';
 import { Badge } from '../ui/Badge';
-import { Printer, RotateCcw, Sparkles, Filter, CheckCircle2, Compass, ArrowRight } from 'lucide-react';
+import { Printer, RotateCcw, Sparkles, Filter, CheckCircle2, Compass, ArrowRight, Brain } from 'lucide-react';
 
 export interface ResultsViewProps {
   initialResult?: ResumeAnalysisResult;
   onUploadNew: () => void;
   onGenerateRoadmap: (result: ResumeAnalysisResult) => void;
+  onStartInterview?: (result: ResumeAnalysisResult) => void;
 }
 
 export const ResultsView: FC<ResultsViewProps> = ({
   initialResult,
   onUploadNew,
-  onGenerateRoadmap
+  onGenerateRoadmap,
+  onStartInterview
 }) => {
   const [selectedRoleId, setSelectedRoleId] = useState<TargetRoleId>(
     initialResult?.roleId || 'full-stack-developer'
@@ -318,6 +320,24 @@ export const ResultsView: FC<ResultsViewProps> = ({
               <Compass size={18} />
               <span>Generate Roadmap for {activeResult.roleTitle}</span>
             </button>
+            {onStartInterview && (
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                onClick={() => onStartInterview(activeResult)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  backgroundColor: 'var(--bg-elevated)',
+                  border: '1px solid var(--accent-primary)',
+                  color: 'var(--text-primary)'
+                }}
+              >
+                <Brain size={18} color="var(--accent-primary)" />
+                <span>Practice in Mock Interview</span>
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-secondary btn-lg"

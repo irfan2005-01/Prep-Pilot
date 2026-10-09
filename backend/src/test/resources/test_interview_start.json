@@ -1,0 +1,8 @@
+{
+  "roleId": "full-stack-developer",
+  "interviewType": "mixed",
+  "difficulty": "intermediate",
+  "questionCount": 3,
+  "strengths": ["React", "TypeScript", "REST APIs"],
+  "skillGaps": ["Docker", "Kubernetes", "Redis"]
+}

@@ -10,7 +10,7 @@
 Prep Pilot is an end-to-end placement preparation ecosystem that unites three critical experiences:
 1. **AI Resume Analysis** *(Phase 1 UI & Phase 2 Real Backend Complete)*: Securely extracts text from PDF/DOCX resumes, calibrates them against industry role rubrics using Gemini AI with weighted heuristic scoring, highlights missing ATS keywords, and transforms bullet points into Google XYZ formula accomplishments.
 2. **Personalized Learning Roadmaps** *(Phase 3 Complete)*: Converts diagnosed resume skill gaps and ATS deficiencies into ordered, milestone-by-milestone learning tracks curated exclusively with vetted, 100% free documentation and tutorials, culminating in an industry capstone project.
-3. **Mock Interview Simulator** *(Phase 4 Planned)*: Realistic technical and HR behavioral interview practice with live rubric scorecards, STAR format evaluation, and historical progress telemetry.
+3. **Mock Interview Simulator** *(Phase 4 Complete)*: Interactive technical and behavioral interview practice powered by Gemini AI with one-question-at-a-time pacing, STAR-method rubric evaluation, diagnostic feedback, bounded in-memory session lifecycles, and final scorecard analytics.
 
 ---
 
@@ -31,13 +31,14 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 
 | Layer | Technology | Status |
 | :--- | :--- | :--- |
-| **Frontend** | React 19 + TypeScript + Vite | **Phase 1, 2 & 3 Complete** |
+| **Frontend** | React 19 + TypeScript + Vite | **Phase 1, 2, 3 & 4 Complete** |
 | **Styling** | Custom Editorial CSS Design System + Design Tokens | **Phase 1 Complete** |
 | **Icons** | `lucide-react` | **Phase 1 Complete** |
-| **Backend** | Java 21 + Spring Boot 3.4.3 (RESTful layered architecture) | **Phase 2 & 3 Complete** |
+| **Backend** | Java 21 + Spring Boot 3.4.3 (RESTful layered architecture) | **Phase 2, 3 & 4 Complete** |
 | **Document Extraction** | Apache PDFBox 3.0.4 & Apache POI 5.4.0 (OOXML) | **Phase 2 Complete** |
-| **AI Integration** | Google Gemini API (gemini-3.5-flash / gemini-2.5-flash, server-side only) | **Phase 2 & 3 Complete** |
-| **Resource Verification** | In-Memory Curated Allowlist Catalog (20+ verified domains) | **Phase 3 Complete** |
+| **AI Integration** | Google Gemini API (gemini-3.5-flash / gemini-2.5-flash, server-side only) | **Phase 2, 3 & 4 Complete** |
+| **Resource Verification** | In-Memory Curated Allowlist Catalog (21 verified domains) | **Phase 3 & 4 Complete** |
+| **Session State** | Thread-safe in-memory session manager with TTL (2h) & scheduled eviction | **Phase 4 Complete** |
 | **Database** | PostgreSQL | *Phase 5 Planned* |
 
 ---
@@ -119,6 +120,41 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 - **Client-Side Progress State**: Interactive milestone checkboxes, completed counter, and dynamic progress bar.
 - **Privacy-Preserving Local Storage**: Checkbox progress is persisted locally in `localStorage` under keys scoped to role IDs (e.g. `prep_pilot_roadmap_progress_full-stack-developer`) without persisting sensitive resume text.
 - **Fallback & Demo Roadmaps**: Pre-calibrated reference roadmaps available for all 7 roles for instant review without hitting AI quotas.
+
+---
+
+## Phase 4 Implementation Features
+
+### 1. AI Mock Interview Simulator (`InterviewSimulatorService`)
+- **Paced One-Question-at-a-Time Experience**:
+  - Dynamically synthesizes role competencies and candidate profile context (diagnosed skill gaps from Phase 2/3) to generate role-targeted questions.
+  - Supports 3 categories: **Mixed**, **Technical Deep Dive**, and **Behavioral / HR**.
+  - 3 Calibers: **Beginner**, **Intermediate**, and **Advanced**.
+  - Configurable length: **5**, **8**, or **10** questions.
+  - Does NOT reveal ideal answers before candidate submissions. Text-based focus (no invasive media permissions).
+
+### 2. Rigorous Dual-Track Rubric & Diagnostic Feedback
+- **Behavioral Questions (STAR Framework)**:
+  - Evaluates Situation, Task, Action, and Result with focus on personal ownership.
+  - *Explicit guardrail*: Does not penalize truthful responses merely because they lack invented metrics.
+- **Technical Questions**:
+  - Evaluates technical accuracy, architectural trade-offs, edge-case resilience, and communication clarity.
+- **Immediate Diagnostic Breakdown**:
+  - 0–100 practice score, demonstrated strengths, specific improvement areas, missing concepts, concise stronger model answer structure, and practical next step.
+  - Practice disclaimer: explicitly labeled as practice feedback, not predictive of actual hiring outcomes.
+
+### 3. Thread-Safe Session Lifecycle Management (`InterviewSessionManager`)
+- **Bounded In-Memory State**: Thread-safe `ConcurrentHashMap` with 2-hour TTL expiration.
+- **Capacity Limits**: Maximum 1,000 active sessions with automatic LRU eviction.
+- **Scheduled Housekeeping**: Background `@Scheduled(fixedRate = 300000)` routine automatically purging stale sessions.
+- **Server-Side Integrity**:
+  - Server enforces question sequence and validates question ID matching.
+  - Rejects duplicate answers, out-of-order submissions, and tampered scores.
+
+### 4. Comprehensive Scorecard & Free Resource Curation
+- At interview completion, computes the arithmetic mean practice score across answered questions (no score fabrication for unanswered questions).
+- Highlights overarching strengths and critical growth priorities.
+- Suggests tailored free learning resources directly from the verified allowlist catalog (`FreeResourceCatalog`).
 
 ---
 
@@ -260,7 +296,35 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
   }
   ```
 
-### 4. System Health Check
+### 4. Mock Interview Simulator
+- **Start Interview**: `POST /api/v1/interviews/start`
+  - Body:
+    ```json
+    {
+      "roleId": "full-stack-developer",
+      "interviewType": "mixed",
+      "difficulty": "intermediate",
+      "questionCount": 5,
+      "strengths": ["React", "TypeScript"],
+      "skillGaps": ["Redis", "Docker"]
+    }
+    ```
+  - Response: `200 OK` with `sessionId`, metadata, and `currentQuestion` (Question 1).
+- **Submit Answer**: `POST /api/v1/interviews/{sessionId}/answer`
+  - Body:
+    ```json
+    {
+      "questionId": "q-1",
+      "answerText": "Candidate practice response..."
+    }
+    ```
+  - Response: `200 OK` with `feedback` (score 0–100, strengths, improvements, missing concepts, suggested model answer, next step) and `nextQuestion`.
+- **Finish Interview**: `POST /api/v1/interviews/{sessionId}/finish`
+  - Response: `200 OK` with aggregate practice scorecard, per-question breakdown, and curated free learning resources.
+- **Interview Simulator Health**: `GET /api/v1/interviews/health`
+  - Response: `200 OK` with `{"status": "UP", "activeSessions": 1}`.
+
+### 5. System Health Check
 - **URL**: `GET /api/v1/health`
 - **Response**: `200 OK`
   ```json
@@ -275,15 +339,15 @@ Prep Pilot is an end-to-end placement preparation ecosystem that unites three cr
 
 ## Boundaries & Next Phases
 
-- **Phase 1, 2 & 3 Completed**:
+- **Phase 1, 2, 3 & 4 Completed**:
   - Full-featured React 19 UI with responsive, accessible editorial design and tab navigation.
   - Real Java 21 + Spring Boot 3 backend with PDFBox/POI text parsing.
   - Server-side Gemini AI integration with 4-part weighted scoring rubric.
   - Clear delineation between live AI evaluations and pre-calibrated reference benchmarks.
   - Personalized Learning Roadmap Engine powered by Gemini AI and an allowlisted 100% free learning resource catalog.
   - Interactive milestone checklist and progress tracking persisted in `localStorage`.
+  - AI Mock Interview Simulator with one-question-at-a-time pacing, STAR behavioral rubrics, architectural technical evaluation, thread-safe session lifecycle, and diagnostic scorecards.
 - **Upcoming Phases**:
-  - **Phase 4**: Technical and HR Mock Interview Simulator with STAR format scoring.
   - **Phase 5**: PostgreSQL persistence for historical interview scorecards and applicant tracking.
   - **Phase 6**: Production containerization (Docker Compose) and cloud deployment.
 

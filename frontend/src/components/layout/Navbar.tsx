@@ -1,10 +1,10 @@
 import { useState, type FC } from 'react';
-import { Compass, FileSearch, Layers, Menu, X } from 'lucide-react';
+import { Compass, FileSearch, Layers, Menu, X, Brain } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 export interface NavbarProps {
-  activeView: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap';
-  setActiveView: (view: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap') => void;
+  activeView: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview';
+  setActiveView: (view: 'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview') => void;
   onExploreSample: () => void;
 }
 
@@ -154,6 +154,19 @@ export const Navbar: FC<NavbarProps> = ({
             </button>
             <button
               type="button"
+              className={`tab-btn ${activeView === 'interview' ? 'active' : ''}`}
+              onClick={() => setActiveView('interview')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Brain size={16} />
+                Mock Interview
+                <Badge variant="orange" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                  Phase 4
+                </Badge>
+              </span>
+            </button>
+            <button
+              type="button"
               className={`tab-btn ${activeView === 'architecture' ? 'active' : ''}`}
               onClick={() => setActiveView('architecture')}
             >
@@ -253,6 +266,18 @@ export const Navbar: FC<NavbarProps> = ({
             >
               <Compass size={16} />
               Learning Roadmap (Phase 3)
+            </button>
+            <button
+              type="button"
+              className={`btn btn-secondary ${activeView === 'interview' ? 'btn-primary' : ''}`}
+              style={{ justifyContent: 'flex-start' }}
+              onClick={() => {
+                setActiveView('interview');
+                setMobileMenuOpen(false);
+              }}
+            >
+              <Brain size={16} />
+              Mock Interview (Phase 4)
             </button>
             <button
               type="button"

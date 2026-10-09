@@ -50,6 +50,42 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getHttpStatus()).body(error);
     }
 
+    @ExceptionHandler(InterviewSessionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleInterviewSessionNotFound(InterviewSessionNotFoundException ex) {
+        log.warn("Interview session not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "Session Not Found",
+            ex.getMessage(),
+            "SESSION_NOT_FOUND",
+            HttpStatus.NOT_FOUND.value()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(InterviewSessionExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleInterviewSessionExpired(InterviewSessionExpiredException ex) {
+        log.warn("Interview session expired: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "Session Expired",
+            ex.getMessage(),
+            "SESSION_EXPIRED",
+            HttpStatus.GONE.value()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
+    @ExceptionHandler(InvalidInterviewStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidInterviewState(InvalidInterviewStateException ex) {
+        log.warn("Invalid interview state transition: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            "Invalid Interview State",
+            ex.getMessage(),
+            "INVALID_INTERVIEW_STATE",
+            HttpStatus.BAD_REQUEST.value()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         log.warn("Upload exceeds maximum allowed size");
@@ -60,6 +96,22 @@ public class GlobalExceptionHandler {
             HttpStatus.PAYLOAD_TOO_LARGE.value()
         );
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+            .map(err -> err.getField() + ": " + err.getDefaultMessage())
+            .findFirst()
+            .orElse("Validation failed");
+        log.warn("Request validation failed: {}", message);
+        ErrorResponse error = ErrorResponse.of(
+            "Validation Failed",
+            message,
+            "VALIDATION_ERROR",
+            HttpStatus.BAD_REQUEST.value()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)

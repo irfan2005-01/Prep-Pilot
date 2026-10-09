@@ -15,7 +15,8 @@ import {
   Award,
   Layers,
   Code2,
-  CheckSquare
+  CheckSquare,
+  Brain
 } from 'lucide-react';
 
 export interface RoadmapViewProps {
@@ -25,6 +26,7 @@ export interface RoadmapViewProps {
   onRetry?: () => void;
   onBackToScorecard: () => void;
   onAnalyzeAnother: () => void;
+  onStartInterview?: (roleId: string) => void;
 }
 
 export const RoadmapView: FC<RoadmapViewProps> = ({
@@ -33,7 +35,8 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
   errorMessage = null,
   onRetry,
   onBackToScorecard,
-  onAnalyzeAnother
+  onAnalyzeAnother,
+  onStartInterview
 }) => {
   const storageKey = roadmap ? `prep_pilot_roadmap_progress_${roadmap.roleId}` : '';
 
@@ -763,6 +766,24 @@ export const RoadmapView: FC<RoadmapViewProps> = ({
             <ArrowLeft size={16} />
             <span>Return to Scorecard</span>
           </button>
+          {onStartInterview && (
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              onClick={() => onStartInterview(roadmap.roleId)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--accent-primary)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              <Brain size={16} color="var(--accent-primary)" />
+              <span>Practice in Mock Interview</span>
+            </button>
+          )}
           <button type="button" className="btn btn-primary btn-lg" onClick={onAnalyzeAnother}>
             <span>Upload Another Resume</span>
           </button>

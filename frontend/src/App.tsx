@@ -9,13 +9,14 @@ import { RoadmapSection } from './components/landing/RoadmapSection';
 import { AnalyzerPage } from './components/analyzer/AnalyzerPage';
 import { ResultsView } from './components/results/ResultsView';
 import { RoadmapView } from './components/roadmap/RoadmapView';
+import { InterviewSimulatorPage } from './components/interview/InterviewSimulatorPage';
 import { BENCHMARK_RESULTS } from './data/benchmarkResults';
 import { BENCHMARK_ROADMAPS } from './data/benchmarkRoadmaps';
 import { DEFAULT_ROLE } from './data/roles';
 import { generateRoadmapApi } from './services/roadmapService';
 
 export function App() {
-  const [activeView, setActiveView] = useState<'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'analyzer' | 'results' | 'architecture' | 'roadmap' | 'interview'>('home');
   const [currentResult, setCurrentResult] = useState<ResumeAnalysisResult>(BENCHMARK_RESULTS[DEFAULT_ROLE.id]);
   const [currentRoadmap, setCurrentRoadmap] = useState<PersonalizedRoadmap | null>(
     BENCHMARK_ROADMAPS[DEFAULT_ROLE.id] || null
@@ -95,6 +96,19 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleStartInterview = (roleOrResult?: TargetRole | ResumeAnalysisResult | string) => {
+    if (roleOrResult && typeof roleOrResult === 'object' && 'roleId' in roleOrResult) {
+      // It's a ResumeAnalysisResult or TargetRole with roleId
+      const roleId = roleOrResult.roleId;
+      const matched = BENCHMARK_RESULTS[roleId];
+      if (matched && !currentResult) {
+        setCurrentResult(matched);
+      }
+    }
+    setActiveView('interview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar
@@ -127,6 +141,7 @@ export function App() {
             initialResult={currentResult}
             onUploadNew={handleStartAnalysis}
             onGenerateRoadmap={handleGenerateRoadmap}
+            onStartInterview={handleStartInterview}
           />
         )}
 
@@ -139,6 +154,23 @@ export function App() {
             onRetry={handleRetryRoadmap}
             onBackToScorecard={handleBackToScorecard}
             onAnalyzeAnother={handleStartAnalysis}
+            onStartInterview={handleStartInterview}
+          />
+        )}
+
+        {activeView === 'interview' && (
+          <InterviewSimulatorPage
+            initialRoleId={currentResult?.roleId || DEFAULT_ROLE.id}
+            contextStrengths={currentResult?.strengths?.map((s) => s.title) || []}
+            contextSkillGaps={currentResult?.keywords?.missingKeywords?.map((k) => k.keyword) || []}
+            onNavigateToRoadmap={() => {
+              setActiveView('roadmap');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onNavigateToAnalyzer={() => {
+              setActiveView('analyzer');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 

@@ -1,0 +1,4 @@
+{
+  "questionId": "q-1",
+  "answerText": "In the Cache-Aside pattern, the application first queries Redis using the user ID as key. If there is a cache hit, it returns the data immediately. On a cache miss, it queries PostgreSQL, writes the result to Redis with a TTL (such as 30 minutes), and returns the result. Stale data risk occurs when a profile is updated in PostgreSQL while the old data is still cached in Redis. To mitigate this, on any profile update operation, we explicitly evict or invalidate the Redis key, and configure an appropriate TTL and allkeys-lru eviction policy."
+}
