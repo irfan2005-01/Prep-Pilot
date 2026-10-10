@@ -133,7 +133,7 @@ public class GlobalExceptionHandler {
         // Do not expose stack traces or raw server internals to client
         ErrorResponse error = ErrorResponse.of(
             "Internal Server Error",
-            "An unexpected error occurred while processing the resume. Please try again.",
+            "An unexpected server error occurred. Please try again.",
             "INTERNAL_SERVER_ERROR",
             HttpStatus.INTERNAL_SERVER_ERROR.value()
         );

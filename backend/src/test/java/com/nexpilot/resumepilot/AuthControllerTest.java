@@ -53,6 +53,32 @@ class AuthControllerTest {
         verify(session).setAttribute(eq("authenticatedStudentId"), anyString());
     }
 
+    @Test void registrationRejectsMissingCsrfHeaderBeforePersisting() {
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("csrf")).thenReturn("session-token");
+        when(request.getHeader("X-CSRF-Token")).thenReturn(null);
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> controller.register(
+            new AuthController.RegisterRequest("Student", "student@example.com", "A sufficiently long password"), request));
+
+        assertEquals(403, error.getStatusCode().value());
+        verifyNoInteractions(students);
+        verifyNoInteractions(passwords);
+    }
+
+    @Test void registrationRejectsCsrfTokenFromAnotherSessionBeforePersisting() {
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("csrf")).thenReturn("current-session-token");
+        when(request.getHeader("X-CSRF-Token")).thenReturn("stale-session-token");
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> controller.register(
+            new AuthController.RegisterRequest("Student", "student@example.com", "A sufficiently long password"), request));
+
+        assertEquals(403, error.getStatusCode().value());
+        verifyNoInteractions(students);
+        verifyNoInteractions(passwords);
+    }
+
     @Test void duplicateEmailIsRejected() {
         csrf();
         when(students.existsByEmailIgnoreCase("student@example.com")).thenReturn(true);

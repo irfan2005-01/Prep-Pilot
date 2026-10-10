@@ -3,9 +3,20 @@ import { API_BASE_URL } from './apiConfig';
 export interface AuthUser { name: string; email: string }
 
 async function csrfToken(): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/csrf`, { credentials: 'include' });
-  if (!response.ok) throw new Error('Could not start a secure session. Please try again.');
-  return ((await response.json()) as { token: string }).token;
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/csrf`, { credentials: 'include' });
+  } catch {
+    throw new Error('Could not reach the sign-in service. Please try again in a moment.');
+  }
+  if (!response.ok) {
+    throw new Error(`Secure session setup failed (HTTP ${response.status}). Please try again.`);
+  }
+  const payload = await response.json().catch(() => null) as { token?: unknown } | null;
+  if (typeof payload?.token !== 'string' || !payload.token) {
+    throw new Error('The sign-in service returned an invalid security response. Please try again.');
+  }
+  return payload.token;
 }
 
 export async function getCsrfHeaders(): Promise<Record<string, string>> {

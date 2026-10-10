@@ -1,4 +1,6 @@
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, '');
+import { normalizeApiBaseUrl } from './normalizeApiBaseUrl';
+
+const configuredApiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 // Production defaults to same-origin `/api` routes behind a reverse proxy.
 // Local development keeps the Spring Boot default; deployments can set VITE_API_BASE_URL.
